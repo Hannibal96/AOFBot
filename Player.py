@@ -6,7 +6,10 @@ import torch
 if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print('Device:', device)
     dealer_model = torch.load("./trained_Dealer_model.torch")
+    blinds_model = torch.load("./trained_Blinds_model.torch")
+    print('Models Loaded')
 
     aof_tables_list = find_running_tables_window()
     running_tables = set_running_tables(aof_tables_list)
@@ -18,5 +21,6 @@ if __name__ == "__main__":
                 table.screen_shot()
 
                 if table.find_button_location(dealer_model=dealer_model, device=device):
+                    table.find_blinds_location(blinds_model=blinds_model, device=device)
                     table.update_hand_counter()
                     print(table)

@@ -12,8 +12,10 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     criterion = nn.CrossEntropyLoss()
 
-    dir = "pictures\Data\Button"
-    dealer_data_train, dealer_data_validation = get_data_loader(data_dir=dir, batch_size=4, height=16, width=16, )
+    button_dir = "pictures\Data\Button"
+    blinds_dir = "pictures\Data\Blinds"
+
+    dealer_data_train, dealer_data_validation = get_data_loader(data_dir=button_dir, batch_size=4, height=16, width=16, )
 
     dealer_model = CnnClassifier(width=16, height=16, channels=3, output=2).to(device)
     dealer_optimizer = torch.optim.Adam(dealer_model.parameters())
@@ -22,12 +24,32 @@ if __name__ == "__main__":
                    dataset=dealer_data_train, testset=dealer_data_validation,
                    epochs=10, task='Dealer', device=device)
 
-    print(classify_image(model=dealer_model, im=cv2.imread('./pictures/Data/Button/Yes/Button_Yes_0.png'), device=device, resize=(16,16)))
+    blinds_data_train, blinds_data_validation = get_data_loader(data_dir=blinds_dir, batch_size=4, height=16, width=16, )
+
+    blinds_model = CnnClassifier(width=16, height=16, channels=3, output=3).to(device)
+    blinds_optimizer = torch.optim.Adam(blinds_model.parameters())
+
+    train_and_eval(model=blinds_model, optimizer=blinds_optimizer, loss_func=criterion,
+                   dataset=blinds_data_train, testset=blinds_data_validation,
+                   epochs=10, task='Blinds', device=device)
+
+    print('Dealer Test')
+    print(classify_image(model=dealer_model, im=cv2.imread('./pictures/Data/Button/Yes/Button_Yes_0.png'), device=device, resize=(16, 16)))
     print(classify_image(model=dealer_model, im=cv2.imread('./pictures/Data/Button/Yes/Button_Yes_10.png'), device=device, resize=(16, 16)))
-    print(classify_image(model=dealer_model, im=cv2.imread('./pictures/Data/Button/Yes/Button_Yes_20.png'), device=device, resize=(16, 16)))
     print(classify_image(model=dealer_model, im=cv2.imread('./pictures/Data/Button/No/Button_No_0.png'), device=device, resize=(16, 16)))
     print(classify_image(model=dealer_model, im=cv2.imread('./pictures/Data/Button/No/Button_No_10.png'), device=device, resize=(16, 16)))
-    print(classify_image(model=dealer_model, im=cv2.imread('./pictures/Data/Button/No/Button_No_5.png'), device=device, resize=(16, 16)))
+
+    print('Blinds Test')
+    print(classify_image(model=blinds_model, im=cv2.imread('./pictures/Data/Blinds/Nothing/Blinds_Nothing_0.png'), device=device, resize=(16, 16)))
+    print(classify_image(model=blinds_model, im=cv2.imread('./pictures/Data/Blinds/Nothing/Blinds_Nothing_10.png'), device=device, resize=(16, 16)))
+    print(classify_image(model=blinds_model, im=cv2.imread('./pictures/Data/Blinds/BB/Blinds_BB_0.png'), device=device, resize=(16, 16)))
+    print(classify_image(model=blinds_model, im=cv2.imread('./pictures/Data/Blinds/BB/Blinds_BB_10.png'), device=device, resize=(16, 16)))
+    print(classify_image(model=blinds_model, im=cv2.imread('./pictures/Data/Blinds/SB/Blinds_SB_0.png'), device=device, resize=(16, 16)))
+    print(classify_image(model=blinds_model, im=cv2.imread('./pictures/Data/Blinds/SB/Blinds_SB_10.png'), device=device, resize=(16, 16)))
+
+
+
+
 
 
 

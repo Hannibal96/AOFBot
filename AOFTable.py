@@ -1,7 +1,8 @@
-import win32gui, pyautogui, os, cv2
-from utils_table import squeeze_name
-from utils_table import button_top_x_cor_rel, button_top_y_cor_rel, button_right_y_cor_rel, button_right_x_cor_rel, button_left_x_cor_rel, button_left_y_cor_rel, \
-    button_x_size_rel, button_y_size_rel, button_bottom_x_cor_rel, button_bottom_y_cor_rel
+import win32gui
+import pyautogui
+import os
+import cv2
+from utils_table import *
 from Enums import Location
 from CNN_utils import classify_image
 
@@ -19,6 +20,8 @@ class AOFTable:
 
         self.curr_screen_shot = None
         self.curr_dealer_location = None
+        self.curr_sb_location = None
+        self.curr_bb_location = None
 
         self.hands_counter = 0
 
@@ -59,26 +62,78 @@ class AOFTable:
 
         self.curr_screen_shot = im[:]
 
-    def find_button_location(self, dealer_model, device):
+    def find_blinds_location(self, blinds_model, device, save=False):
+        blinds_top = blinds_right = blinds_left = blinds_bottom = 0
+
+        while blinds_top + blinds_right + blinds_left + blinds_bottom != 4:
+            blinds_top = self.zoom_in(name='blinds_top', cor_x=int(self.x_size * blinds_top_x_cor_rel),
+                                      cor_y=int(self.y_size * blinds_top_y_cor_rel),
+                                      size_y=int(self.y_size * blinds_y_size_rel),
+                                      size_x=int(self.x_size * blinds_x_size_rel), save=save)
+
+            blinds_right = self.zoom_in(name='blinds_right', cor_x=int(self.x_size * blinds_right_x_cor_rel),
+                                        cor_y=int(self.y_size * blinds_right_y_cor_rel),
+                                        size_y=int(self.y_size * blinds_y_size_rel),
+                                        size_x=int(self.x_size * blinds_x_size_rel), save=save)
+
+            blinds_left = self.zoom_in(name='blinds_left', cor_x=int(self.x_size * blinds_left_x_cor_rel),
+                                       cor_y=int(self.y_size * blinds_left_y_cor_rel),
+                                       size_y=int(self.y_size * blinds_y_size_rel),
+                                       size_x=int(self.x_size * blinds_x_size_rel), save=save)
+
+            blinds_bottom = self.zoom_in(name='blinds_bottom', cor_x=int(self.x_size * blinds_bottom_x_cor_rel),
+                                         cor_y=int(self.y_size * blinds_bottom_y_cor_rel),
+                                         size_y=int(self.y_size * blinds_y_size_rel),
+                                         size_x=int(self.x_size * blinds_x_size_rel), save=save)
+
+            # BB = 0, SB = 2
+            blinds_top = classify_image(model=blinds_model, im=blinds_top, device=device, resize=(16, 16))
+            blinds_right = classify_image(model=blinds_model, im=blinds_right, device=device, resize=(16, 16))
+            blinds_left = classify_image(model=blinds_model, im=blinds_left, device=device, resize=(16, 16))
+            blinds_bottom = classify_image(model=blinds_model, im=blinds_bottom, device=device, resize=(16, 16))
+            print(blinds_top, blinds_left, blinds_right, blinds_bottom)
+
+
+        if blinds_top == 0:
+            self.curr_bb_location = Location.Top
+        if blinds_top == 2:
+            self.curr_sb_location = Location.Top
+
+        if blinds_right == 0:
+            self.curr_bb_location = Location.Right
+        if blinds_right == 2:
+            self.curr_sb_location = Location.Right
+
+        if blinds_left == 0:
+            self.curr_bb_location = Location.Left
+        if blinds_left == 2:
+            self.curr_sb_location = Location.Left
+
+        if blinds_bottom == 0:
+            self.curr_bb_location = Location.Bottom
+        if blinds_bottom == 2:
+            self.curr_sb_location = Location.Bottom
+
+    def find_button_location(self, dealer_model, device, save=False):
         dealer_top = self.zoom_in(name='dealer_top', cor_x=int(self.x_size * button_top_x_cor_rel),
                      cor_y=int(self.y_size * button_top_y_cor_rel),
                      size_y=int(self.y_size * button_y_size_rel),
-                     size_x=int(self.x_size * button_x_size_rel), save=True)
+                     size_x=int(self.x_size * button_x_size_rel), save=save)
 
         dealer_right = self.zoom_in(name='dealer_right', cor_x=int(self.x_size * button_right_x_cor_rel),
                      cor_y=int(self.y_size * button_right_y_cor_rel),
                      size_y=int(self.y_size * button_y_size_rel),
-                     size_x=int(self.x_size * button_x_size_rel), save=True)
+                     size_x=int(self.x_size * button_x_size_rel), save=save)
 
         dealer_left = self.zoom_in(name='dealer_left', cor_x=int(self.x_size * button_left_x_cor_rel),
                      cor_y=int(self.y_size * button_left_y_cor_rel),
                      size_y=int(self.y_size * button_y_size_rel),
-                     size_x=int(self.x_size * button_x_size_rel), save=True)
+                     size_x=int(self.x_size * button_x_size_rel), save=save)
 
         dealer_bottom = self.zoom_in(name='dealer_bottom', cor_x=int(self.x_size * button_bottom_x_cor_rel),
                      cor_y=int(self.y_size * button_bottom_y_cor_rel),
                      size_y=int(self.y_size * button_y_size_rel),
-                     size_x=int(self.x_size * button_x_size_rel), save=True)
+                     size_x=int(self.x_size * button_x_size_rel), save=save)
 
         prev = self.curr_dealer_location
 
@@ -103,5 +158,7 @@ class AOFTable:
         table_str += "*"*5 + " Coordinates: " + str(self.coordinates) + "\n"
         table_str += "*" * 5 + " # Hand: " + str(self.hands_counter) + "\n"
         table_str += "*"*5 + " Dealer Location: " + str(self.curr_dealer_location) + "\n"
+        table_str += "*" * 5 + " SB Location: " + str(self.curr_sb_location) + "\n"
+        table_str += "*" * 5 + " BB Location: " + str(self.curr_bb_location) + "\n"
         return table_str
 
