@@ -3,6 +3,9 @@ def squeeze_name(name):
     return color + "_" + number
 
 
+TOTAL_SUM_OF_LOCATIONS = 6
+TOTAL_SUM_OF_POSITIONS = 4
+
 button_top_x_cor_rel = 580 / 1280
 button_top_y_cor_rel = 240 / 911
 

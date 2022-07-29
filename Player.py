@@ -12,7 +12,7 @@ if __name__ == "__main__":
     print('Models Loaded')
 
     aof_tables_list = find_running_tables_window()
-    running_tables = set_running_tables(aof_tables_list)
+    running_tables = set_running_tables(tables_list=aof_tables_list, dealer_model=dealer_model, blinds_model=blinds_model, device=device)
 
     while True:
         for table in running_tables:
@@ -20,7 +20,8 @@ if __name__ == "__main__":
                 table.fg_table()
                 table.screen_shot()
 
-                if table.find_button_location(dealer_model=dealer_model, device=device):
-                    table.find_blinds_location(blinds_model=blinds_model, device=device)
+                if table.find_button_location(save=False):
+                    table.find_blinds_location(save=False)
+                    table.figure_table_structure()
                     table.update_hand_counter()
                     print(table)

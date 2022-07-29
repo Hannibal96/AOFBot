@@ -100,4 +100,4 @@ def classify_image(model, im, resize, device):
     im = torch.unsqueeze(transfer(im), dim=0).to(device)
     model.eval()
     _, predicted = torch.max(model(im).data, 1)
-    return predicted
+    return predicted.item()
