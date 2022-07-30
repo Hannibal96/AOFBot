@@ -36,3 +36,39 @@ class CnnClassifier(nn.Module):
         x = self.fc3(x)
 
         return x
+
+
+class Flatten(torch.nn.Module):
+    def forward(self, x):
+        batch_size = x.shape[0]
+        return x.view(batch_size, -1)
+
+
+def get_model(width, height, channels, output, conv=0, fc=1):
+    modules = []
+
+    prev_channel = channels
+    for i in range(conv):
+        kernel_size = 2 * (conv-i) + 1
+        kernel_size = (kernel_size, kernel_size)
+        out_channels = 16 * (2**i)
+
+        modules.append(nn.Conv2d(in_channels=prev_channel, out_channels=out_channels, kernel_size=kernel_size, padding=conv-i))
+
+        prev_channel = out_channels
+
+    modules.append(nn.Flatten())
+
+    input = width * height * prev_channel
+    lin_factor = int((input / output) ** (1/fc))
+
+    for i in range(fc-1):
+        modules.append(nn.Linear(in_features=input, out_features=int(input/lin_factor) ))
+        input = int(input/lin_factor)
+
+    modules.append(nn.Linear(in_features=input, out_features=output))
+
+    return nn.Sequential(*modules)
+
+
+

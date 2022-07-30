@@ -4,7 +4,7 @@ import os
 import cv2
 from utils_table import *
 from Enums import Location, Position
-from CNN_utils import classify_image
+from CNN_utils import classify_image, blinds_resize, dealer_resize
 
 
 class AOFTable:
@@ -34,9 +34,6 @@ class AOFTable:
         self.dealer_model = dealer_model
         self.blinds_model = blinds_model
         self.device = device
-
-
-
 
     def get_name(self):
         return self.name
@@ -81,6 +78,8 @@ class AOFTable:
 
         counter = 0
         while not (0 in s and 1 in s and 2 in s):
+            self.screen_shot()
+
             blinds_top = self.zoom_in(name='blinds_top', cor_x=int(self.x_size * blinds_top_x_cor_rel),
                                       cor_y=int(self.y_size * blinds_top_y_cor_rel),
                                       size_y=int(self.y_size * blinds_y_size_rel),
@@ -101,10 +100,10 @@ class AOFTable:
                                          size_y=int(self.y_size * blinds_y_size_rel),
                                          size_x=int(self.x_size * blinds_x_size_rel), save=save)
 
-            blinds_top = classify_image(model=self.blinds_model, im=blinds_top, device=self.device, resize=(16, 16))
-            blinds_right = classify_image(model=self.blinds_model, im=blinds_right, device=self.device, resize=(16, 16))
-            blinds_left = classify_image(model=self.blinds_model, im=blinds_left, device=self.device, resize=(16, 16))
-            blinds_bottom = classify_image(model=self.blinds_model, im=blinds_bottom, device=self.device, resize=(16, 16))
+            blinds_top = classify_image(model=self.blinds_model, im=blinds_top, device=self.device, resize=blinds_resize)
+            blinds_right = classify_image(model=self.blinds_model, im=blinds_right, device=self.device, resize=blinds_resize)
+            blinds_left = classify_image(model=self.blinds_model, im=blinds_left, device=self.device, resize=blinds_resize)
+            blinds_bottom = classify_image(model=self.blinds_model, im=blinds_bottom, device=self.device, resize=blinds_resize)
 
             s = set([blinds_right, blinds_top, blinds_left, blinds_bottom])
 
@@ -114,12 +113,6 @@ class AOFTable:
                 break
 
             self.valid = True
-
-        """print('Blinds Top:', blinds_top)
-        print('Blinds Right:', blinds_right)
-        print('Blinds Bottom:', blinds_bottom)
-        print('Blinds Left:', blinds_left)
-        print((self.valid))"""
 
         if blinds_top == 0:
             self.curr_bb_location = Location.Top
@@ -143,10 +136,11 @@ class AOFTable:
 
     def find_button_location(self, save=False):
         prev = self.curr_dealer_location
-
         dealer_top = dealer_right = dealer_left = dealer_bottom = 0
 
         while dealer_top+dealer_left+dealer_bottom+dealer_right != 1:
+            self.screen_shot()
+
             dealer_top = self.zoom_in(name='dealer_top', cor_x=int(self.x_size * button_top_x_cor_rel),
                          cor_y=int(self.y_size * button_top_y_cor_rel),
                          size_y=int(self.y_size * button_y_size_rel),
@@ -167,10 +161,10 @@ class AOFTable:
                          size_y=int(self.y_size * button_y_size_rel),
                          size_x=int(self.x_size * button_x_size_rel), save=save)
 
-            dealer_top = classify_image(model=self.dealer_model, im=dealer_top, device=self.device, resize=(16, 16))
-            dealer_right = classify_image(model=self.dealer_model, im=dealer_right, device=self.device, resize=(16, 16))
-            dealer_left = classify_image(model=self.dealer_model, im=dealer_left, device=self.device, resize=(16, 16))
-            dealer_bottom = classify_image(model=self.dealer_model, im=dealer_bottom, device=self.device, resize=(16, 16))
+            dealer_top = classify_image(model=self.dealer_model, im=dealer_top, device=self.device, resize=dealer_resize)
+            dealer_right = classify_image(model=self.dealer_model, im=dealer_right, device=self.device, resize=dealer_resize)
+            dealer_left = classify_image(model=self.dealer_model, im=dealer_left, device=self.device, resize=dealer_resize)
+            dealer_bottom = classify_image(model=self.dealer_model, im=dealer_bottom, device=self.device, resize=dealer_resize)
 
             if dealer_top:
                 self.curr_dealer_location = Location.Top
@@ -202,7 +196,6 @@ class AOFTable:
             remain_location = Location(TOTAL_SUM_OF_LOCATIONS - self.curr_bb_location.value -
                                        self.curr_sb_location.value - self.curr_dealer_location.value)
             self.curr_location_position_mapping[remain_location] = Position.CutOff
-            # ^^^ FIXME: maybe cutoff is sitting out
 
         # one sitting out in the middle, not cutoff
         elif (self.curr_dealer_location.value == (self.curr_sb_location.value - 1) % 4 ==
