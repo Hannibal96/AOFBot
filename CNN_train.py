@@ -28,7 +28,7 @@ if __name__ == "__main__":
     blinds_data_train, blinds_data_validation = get_data_loader(data_dir=blinds_dir, batch_size=4, height=blinds_resize[0], width=blinds_resize[1])
 
     #blinds_model = CnnClassifier(width=blinds_resize[1], height=blinds_resize[0], channels=3, output=3).to(device)
-    blinds_model = get_model(width=blinds_resize[1], height=blinds_resize[0], channels=3, output=3, conv=1, fc=2).to(device)
+    blinds_model = get_model(width=blinds_resize[1], height=blinds_resize[0], channels=3, output=3, conv=1, fc=1).to(device)
     blinds_optimizer = torch.optim.Adam(blinds_model.parameters())
 
     train_and_eval(model=blinds_model, optimizer=blinds_optimizer, loss_func=criterion,

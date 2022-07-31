@@ -64,6 +64,7 @@ def get_model(width, height, channels, output, conv=0, fc=1):
 
     for i in range(fc-1):
         modules.append(nn.Linear(in_features=input, out_features=int(input/lin_factor) ))
+        modules.append(nn.LeakyReLU(negative_slope=0.05))
         input = int(input/lin_factor)
 
     modules.append(nn.Linear(in_features=input, out_features=output))
