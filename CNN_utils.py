@@ -7,6 +7,7 @@ from torchvision import transforms
 
 blinds_resize = (48, 48)
 dealer_resize = (24, 24)
+action_resize = (16, 64)
 
 
 def plot_images(images, classification=''):

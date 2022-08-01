@@ -9,10 +9,13 @@ if __name__ == "__main__":
     print('Device:', device)
     dealer_model = torch.load("./trained_Dealer_model.torch")
     blinds_model = torch.load("./trained_Blinds_model.torch")
+    action_model = torch.load("./trained_Action_model.torch")
     print('Models Loaded')
 
     aof_tables_list = find_running_tables_window()
-    running_tables = set_running_tables(tables_list=aof_tables_list, dealer_model=dealer_model, blinds_model=blinds_model, device=device)
+    running_tables = set_running_tables(tables_list=aof_tables_list,
+                                        dealer_model=dealer_model, blinds_model=blinds_model, action_model=action_model,
+                                        device=device)
 
     while True:
         for table in running_tables:
@@ -25,3 +28,7 @@ if __name__ == "__main__":
                     table.figure_table_structure()
                     table.update_hand_counter()
                     print(table)
+                    while not table.is_my_turn():
+                        print('dont play')
+                        time.sleep(0.5)
+                    print('play')

@@ -37,5 +37,8 @@ blinds_bottom_y_cor_rel = 570 / 911
 blinds_x_size_rel = 70 / 1280 # 55
 blinds_y_size_rel = 70 / 911  # 40
 
+action_x_cor_rel = 840 / 1280
+action_y_cor_rel = 785 / 911
 
-
+action_x_size_rel = 425 / 1280
+action_y_size_rel = 110 / 911

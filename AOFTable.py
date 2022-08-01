@@ -4,11 +4,11 @@ import os
 import cv2
 from utils_table import *
 from Enums import Location, Position
-from CNN_utils import classify_image, blinds_resize, dealer_resize
+from CNN_utils import classify_image, blinds_resize, dealer_resize, action_resize
 
 
 class AOFTable:
-    def __init__(self, name, hwnd, dealer_model, blinds_model, device):
+    def __init__(self, name, hwnd, dealer_model, blinds_model, action_model, device):
         self.name = name
         self.short_name = squeeze_name(name)
         self.hwnd = hwnd
@@ -33,6 +33,7 @@ class AOFTable:
 
         self.dealer_model = dealer_model
         self.blinds_model = blinds_model
+        self.action_model = action_model
         self.device = device
 
     def get_name(self):
@@ -223,6 +224,15 @@ class AOFTable:
 
             else:
                 assert False, "-E- impossible table structure"
+
+    def is_my_turn(self, save=False):
+        self.screen_shot()
+        action = self.zoom_in(name='action', cor_x=int(self.x_size * action_x_cor_rel),
+                              cor_y=int(self.y_size * action_y_cor_rel),
+                              size_y=int(self.y_size * action_y_size_rel),
+                              size_x=int(self.x_size * action_x_size_rel), save=save)
+
+        return classify_image(model=self.action_model, im=action, device=self.device, resize=action_resize)
 
     def __str__(self):
         table_str = "*"*10 + " " + self.name + " " + "*"*10 + "\n"
