@@ -73,9 +73,11 @@ class AOFTable:
 
         self.curr_screen_shot = im[:]
 
+        self.update_hand_counter()
+
     def find_blinds_location(self, save=False):
         blinds_top = blinds_right = blinds_left = blinds_bottom = 0
-        s = set([blinds_right, blinds_top, blinds_left, blinds_bottom])
+        s = {blinds_right, blinds_top, blinds_left, blinds_bottom}
 
         counter = 0
         while not (0 in s and 1 in s and 2 in s):
@@ -106,7 +108,7 @@ class AOFTable:
             blinds_left = classify_image(model=self.blinds_model, im=blinds_left, device=self.device, resize=blinds_resize)
             blinds_bottom = classify_image(model=self.blinds_model, im=blinds_bottom, device=self.device, resize=blinds_resize)
 
-            s = set([blinds_right, blinds_top, blinds_left, blinds_bottom])
+            s = {blinds_right, blinds_top, blinds_left, blinds_bottom}
 
             counter += 1
             if counter == 2:
@@ -233,6 +235,85 @@ class AOFTable:
                               size_x=int(self.x_size * action_x_size_rel), save=save)
 
         return classify_image(model=self.action_model, im=action, device=self.device, resize=action_resize)
+
+    def read_holding_cards(self, save=False):
+        left_card = self.zoom_in(name='bottom_left_card',
+                                 cor_x=int(self.x_size * holding_cards_bottom_left_x_cor_rel),
+                                 cor_y=int(self.y_size * holding_cards_bottom_left_y_cor_rel),
+                                 size_y=int(self.y_size * card_y_size_rel),
+                                 size_x=int(self.x_size * card_x_size_rel), save=save)
+
+        right_card = self.zoom_in(name='bottom_right_card',
+                                 cor_x=int(self.x_size * holding_cards_bottom_right_x_cor_rel),
+                                 cor_y=int(self.y_size * holding_cards_bottom_right_y_cor_rel),
+                                 size_y=int(self.y_size * card_y_size_rel),
+                                 size_x=int(self.x_size * card_x_size_rel), save=save)
+
+
+    def read_villains_holding_cards(self, save=False):
+        top_left_card = self.zoom_in(name='top_left_card',
+                                 cor_x=int(self.x_size * holding_cards_top_left_x_cor_rel),
+                                 cor_y=int(self.y_size * holding_cards_top_left_y_cor_rel),
+                                 size_y=int(self.y_size * card_y_size_rel),
+                                 size_x=int(self.x_size * card_x_size_rel), save=save)
+
+        top_right_card = self.zoom_in(name='top_right_card',
+                                  cor_x=int(self.x_size * holding_cards_top_right_x_cor_rel),
+                                  cor_y=int(self.y_size * holding_cards_top_right_y_cor_rel),
+                                  size_y=int(self.y_size * card_y_size_rel),
+                                  size_x=int(self.x_size * card_x_size_rel), save=save)
+
+        right_left_card = self.zoom_in(name='right_left_card',
+                                     cor_x=int(self.x_size * holding_cards_right_left_x_cor_rel),
+                                     cor_y=int(self.y_size * holding_cards_right_left_y_cor_rel),
+                                     size_y=int(self.y_size * card_y_size_rel),
+                                     size_x=int(self.x_size * card_x_size_rel), save=save)
+
+        right_right_card = self.zoom_in(name='right_right_card',
+                                      cor_x=int(self.x_size * holding_cards_right_right_x_cor_rel),
+                                      cor_y=int(self.y_size * holding_cards_right_right_y_cor_rel),
+                                      size_y=int(self.y_size * card_y_size_rel),
+                                      size_x=int(self.x_size * card_x_size_rel), save=save)
+
+        left_left_card = self.zoom_in(name='left_left_card',
+                                       cor_x=int(self.x_size * holding_cards_left_left_x_cor_rel),
+                                       cor_y=int(self.y_size * holding_cards_left_left_y_cor_rel),
+                                       size_y=int(self.y_size * card_y_size_rel),
+                                       size_x=int(self.x_size * card_x_size_rel), save=save)
+
+        left_right_card = self.zoom_in(name='left_right_card',
+                                        cor_x=int(self.x_size * holding_cards_left_right_x_cor_rel),
+                                        cor_y=int(self.y_size * holding_cards_left_right_y_cor_rel),
+                                        size_y=int(self.y_size * card_y_size_rel),
+                                        size_x=int(self.x_size * card_x_size_rel), save=save)
+
+    def read_community_cards(self, save=False):
+        community_card_1 = self.zoom_in(name='community_card_1',
+                                        cor_x=int(self.x_size * community_cards_1_x_cor_rel),
+                                        cor_y=int(self.y_size * community_cards_1_y_cor_rel),
+                                        size_y=int(self.y_size * card_y_size_rel),
+                                        size_x=int(self.x_size * card_x_size_rel), save=save)
+        community_card_2 = self.zoom_in(name='community_card_2',
+                                        cor_x=int(self.x_size * community_cards_2_x_cor_rel),
+                                        cor_y=int(self.y_size * community_cards_2_y_cor_rel),
+                                        size_y=int(self.y_size * card_y_size_rel),
+                                        size_x=int(self.x_size * card_x_size_rel), save=save)
+        community_card_3 = self.zoom_in(name='community_card_3',
+                                        cor_x=int(self.x_size * community_cards_3_x_cor_rel),
+                                        cor_y=int(self.y_size * community_cards_3_y_cor_rel),
+                                        size_y=int(self.y_size * card_y_size_rel),
+                                        size_x=int(self.x_size * card_x_size_rel), save=save)
+        community_card_4 = self.zoom_in(name='community_card_4',
+                                        cor_x=int(self.x_size * community_cards_4_x_cor_rel),
+                                        cor_y=int(self.y_size * community_cards_4_y_cor_rel),
+                                        size_y=int(self.y_size * card_y_size_rel),
+                                        size_x=int(self.x_size * card_x_size_rel), save=save)
+        community_card_5 = self.zoom_in(name='community_card_5',
+                                        cor_x=int(self.x_size * community_cards_5_x_cor_rel),
+                                        cor_y=int(self.y_size * community_cards_5_y_cor_rel),
+                                        size_y=int(self.y_size * card_y_size_rel),
+                                        size_x=int(self.x_size * card_x_size_rel), save=save)
+
 
     def __str__(self):
         table_str = "*"*10 + " " + self.name + " " + "*"*10 + "\n"

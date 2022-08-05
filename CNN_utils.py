@@ -8,6 +8,8 @@ from torchvision import transforms
 blinds_resize = (48, 48)
 dealer_resize = (24, 24)
 action_resize = (16, 64)
+suit_resize = (32, 64)
+value_resize = (32, 64)
 
 
 def plot_images(images, classification=''):
@@ -83,7 +85,7 @@ def train_and_eval(model, optimizer, loss_func, dataset, testset, epochs, task, 
         print("#Epoch {} - Train Loss: {:.3f}, Train Accuracy: {:.3f}, Eval Loss: {:.3f}, Eval Accuracy: {:.3f}"
               .format(epoch, train_loss, 100*train_acc, eval_loss, 100*eval_acc))
         tl.append(train_loss) ; ta.append(train_acc * 100) ; el.append(eval_loss) ; ea.append(eval_acc * 100)
-        if (train_acc == 1.0 and eval_acc == 1.0) or train_loss == 0.0:
+        if (train_acc == 1.0 and eval_acc == 1.0) or train_loss < 1e-2:
             break
 
     plt.plot(tl, label="Train")

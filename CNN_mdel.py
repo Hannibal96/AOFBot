@@ -49,11 +49,12 @@ def get_model(width, height, channels, output, conv=0, fc=1):
 
     prev_channel = channels
     for i in range(conv):
-        kernel_size = 2 * (conv-i) + 1
+        x = 3-i
+        kernel_size = 2 * x + 1
         kernel_size = (kernel_size, kernel_size)
         out_channels = 16 * (2**i)
 
-        modules.append(nn.Conv2d(in_channels=prev_channel, out_channels=out_channels, kernel_size=kernel_size, padding=conv-i))
+        modules.append(nn.Conv2d(in_channels=prev_channel, out_channels=out_channels, kernel_size=kernel_size, padding=x))
 
         prev_channel = out_channels
 

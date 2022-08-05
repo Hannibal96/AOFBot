@@ -28,7 +28,9 @@ if __name__ == "__main__":
                     table.figure_table_structure()
                     table.update_hand_counter()
                     print(table)
-                    while not table.is_my_turn():
-                        print('dont play')
-                        time.sleep(0.5)
+                if table.is_my_turn():
                     print('play')
+
+                table.read_holding_cards(save=True)
+                table.read_community_cards(save=True)
+                table.read_villains_holding_cards(save=True)
