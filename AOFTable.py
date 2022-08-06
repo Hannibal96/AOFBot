@@ -73,8 +73,6 @@ class AOFTable:
 
         self.curr_screen_shot = im[:]
 
-        self.update_hand_counter()
-
     def find_blinds_location(self, save=False):
         blinds_top = blinds_right = blinds_left = blinds_bottom = 0
         s = {blinds_right, blinds_top, blinds_left, blinds_bottom}
@@ -249,6 +247,7 @@ class AOFTable:
                                  size_y=int(self.y_size * card_y_size_rel),
                                  size_x=int(self.x_size * card_x_size_rel), save=save)
 
+        # TODO: finish implement
 
     def read_villains_holding_cards(self, save=False):
         top_left_card = self.zoom_in(name='top_left_card',
@@ -314,6 +313,9 @@ class AOFTable:
                                         size_y=int(self.y_size * card_y_size_rel),
                                         size_x=int(self.x_size * card_x_size_rel), save=save)
 
+    def read_actions_history(self, save=False):
+        pass
+        # TODO: implement
 
     def __str__(self):
         table_str = "*"*10 + " " + self.name + " " + "*"*10 + "\n"

@@ -5,7 +5,7 @@ from PIL import Image
 from torchvision import transforms
 from CNN_data import get_data_loader
 from CNN_mdel import get_model
-
+import os
 
 blinds_resize = (48, 48)
 dealer_resize = (24, 24)
@@ -100,7 +100,7 @@ def train_and_eval(model, optimizer, loss_func, dataset, testset, epochs, task, 
     axes[1].set_title(task + " " + model_str + " -Accuracy")
     axes[1].legend()
     plt.show()
-
+    # TODO: save the best model not the last one
     torch.save(model, "./trained_"+task+"_model.torch")
 
     return train_acc, eval_acc
@@ -115,9 +115,10 @@ def classify_image(model, im, resize, device):
     return predicted.item()
 
 
-def hpo(data_dir, resize, output, criterion, device):
+def hpo(data_dir, resize, criterion, device):
 
     task = data_dir.split('\\')[-1]
+    output = len(os.listdir(data_dir))
 
     params_list = [(0, 1),
                    (0, 2),
@@ -126,17 +127,20 @@ def hpo(data_dir, resize, output, criterion, device):
                    (1, 3),
                    (2, 2)]
 
-    batch_size = 32
-    data_train, data_validation = get_data_loader(data_dir=data_dir, batch_size=batch_size, height=resize[0], width=resize[1])
-
     for params in params_list:
-        conv, fc = params
-        model_str = 'CV='+str(conv)+' FC='+str(fc)+' BS='+str(batch_size)
+        for batch_size in [4, 16, 64]:
+            for lr in [1e-2, 1e-3, 1e-4]:
+                data_train, data_validation = get_data_loader(data_dir=data_dir, batch_size=batch_size, height=resize[0], width=resize[1])
 
-        model = get_model(width=resize[1], height=resize[0], channels=3, output=output, conv=conv, fc=fc).to(device)
-        optimizer = torch.optim.Adam(model.parameters())
-        train_acc, eval_acc = train_and_eval(model=model, optimizer=optimizer, loss_func=criterion,
-                                             dataset=data_train, testset=data_validation,
-                                             epochs=50, task=task, device=device, model_str=model_str)
-        if train_acc == 1.0 and eval_acc == 1.0:
-            break
+                conv, fc = params
+                model_str = 'CV='+str(conv)+' FC='+str(fc)+' BS='+str(batch_size)+' lr='+str(lr)
+
+                model = get_model(width=resize[1], height=resize[0], channels=3, output=output, conv=conv, fc=fc).to(device)
+                optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+                train_acc, eval_acc = train_and_eval(model=model, optimizer=optimizer, loss_func=criterion,
+                                                     dataset=data_train, testset=data_validation,
+                                                     epochs=25, task=task, device=device, model_str=model_str)
+
+                if train_acc == 1.0 and eval_acc >= 0.95:
+                    return
+

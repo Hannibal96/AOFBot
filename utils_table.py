@@ -16,7 +16,7 @@ button_left_x_cor_rel = 185 / 1280
 button_left_y_cor_rel = 480 / 911
 
 button_bottom_x_cor_rel = 530 / 1280
-button_bottom_y_cor_rel = 620 / 911
+button_bottom_y_cor_rel = 632 / 911
 
 button_x_size_rel = 40 / 1280
 button_y_size_rel = 40 / 911
@@ -32,23 +32,23 @@ blinds_left_x_cor_rel = 205 / 1280
 blinds_left_y_cor_rel = 415 / 911
 
 blinds_bottom_x_cor_rel = 610 / 1280
-blinds_bottom_y_cor_rel = 570 / 911
+blinds_bottom_y_cor_rel = 573 / 911
 
 blinds_x_size_rel = 70 / 1280
 blinds_y_size_rel = 70 / 911
 
 action_x_cor_rel = 840 / 1280
-action_y_cor_rel = 785 / 911
+action_y_cor_rel = 790 / 911
 
 action_x_size_rel = 425 / 1280
 action_y_size_rel = 110 / 911
 
 
 holding_cards_top_left_x_cor_rel = 567 / 1280
-holding_cards_top_left_y_cor_rel = 72 / 911
+holding_cards_top_left_y_cor_rel = 69 / 911
 
-holding_cards_top_right_x_cor_rel = 627 / 1280
-holding_cards_top_right_y_cor_rel = 68 / 911
+holding_cards_top_right_x_cor_rel = 620 / 1280
+holding_cards_top_right_y_cor_rel = 60 / 911
 
 holding_cards_right_left_x_cor_rel = 1106 / 1280
 holding_cards_right_left_y_cor_rel = 331 / 911
@@ -57,10 +57,10 @@ holding_cards_right_right_x_cor_rel = 1165 / 1280
 holding_cards_right_right_y_cor_rel = 326 / 911
 
 holding_cards_bottom_left_x_cor_rel = 562 / 1280
-holding_cards_bottom_left_y_cor_rel = 677 / 911
+holding_cards_bottom_left_y_cor_rel = 683 / 911
 
 holding_cards_bottom_right_x_cor_rel = 628 / 1280
-holding_cards_bottom_right_y_cor_rel = 670 / 911
+holding_cards_bottom_right_y_cor_rel = 678 / 911
 
 holding_cards_left_left_x_cor_rel = 30 / 1280
 holding_cards_left_left_y_cor_rel = 333 / 911

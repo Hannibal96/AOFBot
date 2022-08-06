@@ -21,16 +21,16 @@ if __name__ == "__main__":
         for table in running_tables:
             if table.is_table_visible():
                 table.fg_table()
-                table.screen_shot()
 
-                if table.find_button_location(save=False):
+                if table.find_button_location(save=True):
+                    table.update_hand_counter()
+
+                if table.is_my_turn(save=False):
                     table.find_blinds_location(save=False)
                     table.figure_table_structure()
-                    table.update_hand_counter()
+                    table.read_holding_cards(save=False)
                     print(table)
-                if table.is_my_turn():
-                    print('play')
+                    print('\n ACT \n')
 
-                table.read_holding_cards(save=True)
-                table.read_community_cards(save=True)
-                table.read_villains_holding_cards(save=True)
+                #table.read_community_cards(save=False)
+                #table.read_villains_holding_cards(save=False)
