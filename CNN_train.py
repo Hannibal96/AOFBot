@@ -6,34 +6,6 @@ import torch
 import torch.nn as nn
 from CNN_mdel import CnnClassifier, get_model
 
-
-def hpo(data_dir, resize, output, criterion, device):
-
-    task = data_dir.split('\\')[-1]
-
-    params_list = [(0, 1),
-                   (0, 2),
-                   (1, 1),
-                   (1, 2),
-                   (1, 3),
-                   (2, 2)]
-
-    batch_size = 32
-    data_train, data_validation = get_data_loader(data_dir=data_dir, batch_size=batch_size, height=resize[0], width=resize[1])
-
-    for params in params_list:
-        conv, fc = params
-        model_str = 'CV='+str(conv)+' FC='+str(fc)+' BS='+str(batch_size)
-
-        model = get_model(width=resize[1], height=resize[0], channels=3, output=output, conv=conv, fc=fc).to(device)
-        optimizer = torch.optim.Adam(model.parameters())
-        train_acc, eval_acc = train_and_eval(model=model, optimizer=optimizer, loss_func=criterion,
-                                             dataset=data_train, testset=data_validation,
-                                             epochs=50, task=task, device=device, model_str=model_str)
-        if train_acc == 1.0 and eval_acc == 1.0:
-            break
-
-
 if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
