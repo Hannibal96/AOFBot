@@ -68,7 +68,7 @@ def eval_epoch(model, loss_func, test_set, device):
     return total_loss / total_samples, total_correct / total_samples
 
 
-def train_and_eval(model, optimizer, loss_func, dataset, testset, epochs, task, device):
+def train_and_eval(model, optimizer, loss_func, dataset, testset, epochs, task, model_str, device):
 
     tl = [] ; ta = [] ; el = [] ; ea = []
 
@@ -82,25 +82,26 @@ def train_and_eval(model, optimizer, loss_func, dataset, testset, epochs, task, 
     for epoch in range(1, epochs+1):
         train_loss, train_acc = train_epoch(model=model, optimizer=optimizer, loss_func=loss_func, train_dataset=dataset, device=device)
         eval_loss, eval_acc = eval_epoch(model=model, loss_func=loss_func, test_set=testset, device=device)
-        print("#Epoch {} - Train Loss: {:.3f}, Train Accuracy: {:.3f}, Eval Loss: {:.3f}, Eval Accuracy: {:.3f}"
+        print("#Epoch {} - Train Loss: {:.5f}, Train Accuracy: {:.2f}, Eval Loss: {:.5f}, Eval Accuracy: {:.2f}"
               .format(epoch, train_loss, 100*train_acc, eval_loss, 100*eval_acc))
         tl.append(train_loss) ; ta.append(train_acc * 100) ; el.append(eval_loss) ; ea.append(eval_acc * 100)
-        if (train_acc == 1.0 and eval_acc == 1.0) or train_loss < 1e-2:
+        if (train_acc == 1.0 and eval_acc == 1.0) or train_loss < 1e-4:
             break
 
-    plt.plot(tl, label="Train")
-    plt.plot(el, label="Eval")
-    plt.title(task+"-Loss")
-    plt.legend()
-    plt.show()
-
-    plt.plot(ta, label="Train")
-    plt.plot(ea, label="Eval")
-    plt.title(task + "-Accuracy")
-    plt.legend()
+    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+    axes[0].plot(tl, label="Train")
+    axes[0].plot(el, label="Eval")
+    axes[0].set_title(task + " " + model_str+" -Loss")
+    axes[0].legend()
+    axes[1].plot(ta, label="Train")
+    axes[1].plot(ea, label="Eval")
+    axes[1].set_title(task + " " + model_str + " -Accuracy")
+    axes[1].legend()
     plt.show()
 
     torch.save(model, "./trained_"+task+"_model.torch")
+
+    return train_acc, eval_acc
 
 
 def classify_image(model, im, resize, device):
