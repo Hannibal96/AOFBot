@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import torch
 from PIL import Image
 from torchvision import transforms
+from CNN_data import get_data_loader
+from CNN_mdel import get_model
 
 
 blinds_resize = (48, 48)
