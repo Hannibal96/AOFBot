@@ -16,6 +16,23 @@ class Position(Enum):
     SittingOut = -1
 
 
+class Action(Enum):
+    UnDecided = 0
+    Fold = 1
+    AllIn = 2
+
+
+class PreviousAction(Enum):
+    Empty = 0
+    OneRaiseCutoff = 1
+    OneRaiseDealer = 2
+    OneRaiseSmallBlind = 3
+    TwoRaiseCutoffDealer = 4
+    TwoRaiseCutoffSmallBlind = 5
+    TwoRaiseDealerSmallBlind = 6
+    ThreeRaise = 6
+
+
 class Color:
     PURPLE = '\033[95m'
     CYAN = '\033[96m'

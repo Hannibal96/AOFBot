@@ -6,12 +6,19 @@ from torchvision import transforms
 from CNN_data import get_data_loader
 from CNN_mdel import get_model
 import os
+from Enums import *
+
 
 blinds_resize = (48, 48)
 dealer_resize = (24, 24)
 action_resize = (16, 64)
 suit_resize = (32, 64)
 value_resize = (32, 64)
+
+blinds_label_converter = {Action.AllIn: 0,
+                          Position.BigBlind: 1,
+                          Action.UnDecided: 2,
+                          Position: 3}
 
 
 def plot_images(images, classification=''):
@@ -141,6 +148,6 @@ def hpo(data_dir, resize, criterion, device):
                                                      dataset=data_train, testset=data_validation,
                                                      epochs=25, task=task, device=device, model_str=model_str)
 
-                if train_acc == 1.0 and eval_acc >= 0.95:
+                if train_acc == 1.0 and eval_acc == 1.0:
                     return
 

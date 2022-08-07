@@ -3,8 +3,8 @@ import pyautogui
 import os
 import cv2
 from utils_table import *
-from Enums import Location, Position
-from CNN_utils import classify_image, blinds_resize, dealer_resize, action_resize
+from Enums import *
+from CNN_utils import *
 
 
 class AOFTable:
@@ -75,10 +75,9 @@ class AOFTable:
 
     def find_blinds_location(self, save=False):
         blinds_top = blinds_right = blinds_left = blinds_bottom = 0
-        s = {blinds_right, blinds_top, blinds_left, blinds_bottom}
+        res = [blinds_top, blinds_right, blinds_bottom, blinds_left]
 
-        counter = 0
-        while not (0 in s and 1 in s and 2 in s):
+        while True:
             self.screen_shot()
 
             blinds_top = self.zoom_in(name='blinds_top', cor_x=int(self.x_size * blinds_top_x_cor_rel),
@@ -106,78 +105,85 @@ class AOFTable:
             blinds_left = classify_image(model=self.blinds_model, im=blinds_left, device=self.device, resize=blinds_resize)
             blinds_bottom = classify_image(model=self.blinds_model, im=blinds_bottom, device=self.device, resize=blinds_resize)
 
-            s = {blinds_right, blinds_top, blinds_left, blinds_bottom}
-
-            counter += 1
-            if counter == 2:
-                self.valid = False
+            if res == [blinds_top, blinds_right, blinds_bottom, blinds_left]:
+                self.valid = True
                 break
+            else:
+                res = [blinds_top, blinds_right, blinds_bottom, blinds_left]
+            self.valid = False
 
-            self.valid = True
-
-        if blinds_top == 0:
+        if blinds_top == blinds_label_converter[Position.BigBlind]:
             self.curr_bb_location = Location.Top
-        if blinds_top == 2:
-            self.curr_sb_location = Location.Top
-
-        if blinds_right == 0:
+        elif blinds_right == blinds_label_converter[Position.BigBlind]:
             self.curr_bb_location = Location.Right
-        if blinds_right == 2:
-            self.curr_sb_location = Location.Right
-
-        if blinds_left == 0:
+        elif blinds_left == blinds_label_converter[Position.BigBlind]:
             self.curr_bb_location = Location.Left
-        if blinds_left == 2:
-            self.curr_sb_location = Location.Left
-
-        if blinds_bottom == 0:
+        elif blinds_bottom == blinds_label_converter[Position.BigBlind]:
             self.curr_bb_location = Location.Bottom
-        if blinds_bottom == 2:
+        else:
+            assert False, "-E- Didn't recognize BB"
+
+        if blinds_top == blinds_label_converter[Position.SmallBlind]:
+            self.curr_sb_location = Location.Top
+        elif blinds_right == blinds_label_converter[Position.SmallBlind]:
+            self.curr_sb_location = Location.Right
+        elif blinds_left == blinds_label_converter[Position.SmallBlind]:
+            self.curr_sb_location = Location.Left
+        elif blinds_bottom == blinds_label_converter[Position.SmallBlind]:
             self.curr_sb_location = Location.Bottom
+        else:
+            assert False, "-E- Didn't recognize SB"
 
     def find_button_location(self, save=False):
         prev = self.curr_dealer_location
         dealer_top = dealer_right = dealer_left = dealer_bottom = 0
+        res = [dealer_top, dealer_right, dealer_bottom, dealer_left]
 
-        while dealer_top+dealer_left+dealer_bottom+dealer_right != 1:
+        while True:
             self.screen_shot()
 
             dealer_top = self.zoom_in(name='dealer_top', cor_x=int(self.x_size * button_top_x_cor_rel),
-                         cor_y=int(self.y_size * button_top_y_cor_rel),
-                         size_y=int(self.y_size * button_y_size_rel),
-                         size_x=int(self.x_size * button_x_size_rel), save=save)
+                                      cor_y=int(self.y_size * button_top_y_cor_rel),
+                                      size_y=int(self.y_size * button_y_size_rel),
+                                      size_x=int(self.x_size * button_x_size_rel), save=save)
 
             dealer_right = self.zoom_in(name='dealer_right', cor_x=int(self.x_size * button_right_x_cor_rel),
-                         cor_y=int(self.y_size * button_right_y_cor_rel),
-                         size_y=int(self.y_size * button_y_size_rel),
-                         size_x=int(self.x_size * button_x_size_rel), save=save)
+                                        cor_y=int(self.y_size * button_right_y_cor_rel),
+                                        size_y=int(self.y_size * button_y_size_rel),
+                                        size_x=int(self.x_size * button_x_size_rel), save=save)
 
             dealer_left = self.zoom_in(name='dealer_left', cor_x=int(self.x_size * button_left_x_cor_rel),
-                         cor_y=int(self.y_size * button_left_y_cor_rel),
-                         size_y=int(self.y_size * button_y_size_rel),
-                         size_x=int(self.x_size * button_x_size_rel), save=save)
+                                       cor_y=int(self.y_size * button_left_y_cor_rel),
+                                       size_y=int(self.y_size * button_y_size_rel),
+                                       size_x=int(self.x_size * button_x_size_rel), save=save)
 
             dealer_bottom = self.zoom_in(name='dealer_bottom', cor_x=int(self.x_size * button_bottom_x_cor_rel),
-                         cor_y=int(self.y_size * button_bottom_y_cor_rel),
-                         size_y=int(self.y_size * button_y_size_rel),
-                         size_x=int(self.x_size * button_x_size_rel), save=save)
+                                         cor_y=int(self.y_size * button_bottom_y_cor_rel),
+                                         size_y=int(self.y_size * button_y_size_rel),
+                                         size_x=int(self.x_size * button_x_size_rel), save=save)
 
             dealer_top = classify_image(model=self.dealer_model, im=dealer_top, device=self.device, resize=dealer_resize)
             dealer_right = classify_image(model=self.dealer_model, im=dealer_right, device=self.device, resize=dealer_resize)
             dealer_left = classify_image(model=self.dealer_model, im=dealer_left, device=self.device, resize=dealer_resize)
             dealer_bottom = classify_image(model=self.dealer_model, im=dealer_bottom, device=self.device, resize=dealer_resize)
 
-            if dealer_top:
-                self.curr_dealer_location = Location.Top
+            if res == [dealer_top, dealer_right, dealer_bottom, dealer_left]:
+                break
 
-            if dealer_right:
-                self.curr_dealer_location = Location.Right
+        if dealer_top:
+            self.curr_dealer_location = Location.Top
 
-            if dealer_left:
-                self.curr_dealer_location = Location.Left
+        elif dealer_right:
+            self.curr_dealer_location = Location.Right
 
-            if dealer_bottom:
-                self.curr_dealer_location = Location.Bottom
+        elif dealer_left:
+            self.curr_dealer_location = Location.Left
+
+        elif dealer_bottom:
+            self.curr_dealer_location = Location.Bottom
+
+        else:
+            assert False, "-E- Didn't recognize Button"
 
         if prev != self.curr_dealer_location:
             return True
