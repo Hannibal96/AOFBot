@@ -83,7 +83,7 @@ def train_and_eval(model, optimizer, loss_func, dataset, testset, epochs, task, 
 
     eval_loss, eval_acc = eval_epoch(model=model, loss_func=loss_func, test_set=testset, device=device)
     print("*" * 25)
-    print("*" * 10, task, "*" * 10)
+    print("*" * 10, task, "*" * 3, 'LR=', str(optimizer.param_groups[0]['lr']), "*" * 3, 'BS=', str(dataset.batch_size))
     print("*" * 25)
     print(model)
     print("#Epoch {} - Eval Loss: {:.3f}, Eval Accuracy: {:.3f}".format(0, eval_loss, eval_acc*100))
@@ -134,9 +134,9 @@ def hpo(data_dir, resize, criterion, device):
                    (1, 3),
                    (2, 2)]
 
-    for params in params_list:
-        for batch_size in [4, 16, 64]:
-            for lr in [1e-2, 1e-3, 1e-4]:
+    for params in [(3, 3)]:
+        for batch_size in [4, 64]:
+            for lr in [1e-3]:
                 data_train, data_validation = get_data_loader(data_dir=data_dir, batch_size=batch_size, height=resize[0], width=resize[1])
 
                 conv, fc = params

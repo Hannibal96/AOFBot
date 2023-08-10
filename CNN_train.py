@@ -17,10 +17,10 @@ if __name__ == "__main__":
     suit_dir = "pictures\Data\Suit"
     value_dir = "pictures\Data\Value"
 
-    hpo(data_dir=button_dir, resize=dealer_resize, criterion=criterion, device=device)
-    hpo(data_dir=blinds_dir, resize=blinds_resize, criterion=criterion, device=device)
-    hpo(data_dir=action_dir, resize=action_resize, criterion=criterion, device=device)
-    hpo(data_dir=suit_dir, resize=suit_resize, criterion=criterion, device=device)
+    #hpo(data_dir=button_dir, resize=dealer_resize, criterion=criterion, device=device)
+    #hpo(data_dir=blinds_dir, resize=blinds_resize, criterion=criterion, device=device)
+    #hpo(data_dir=action_dir, resize=action_resize, criterion=criterion, device=device)
+    #hpo(data_dir=suit_dir, resize=suit_resize, criterion=criterion, device=device)
     hpo(data_dir=value_dir, resize=value_resize, criterion=criterion, device=device)
 
     #print(classify_image(model=blinds_model, im=cv2.imread('./pictures/Data/Blinds/Nothing/Blinds_Nothing_0.png'), device=device, resize=blinds_resize))
