@@ -77,9 +77,9 @@ def eval_epoch(model, loss_func, test_set, device):
     return total_loss / total_samples, total_correct / total_samples
 
 
-def train_and_eval(model, optimizer, loss_func, dataset, testset, epochs, task, model_str, device):
+def train_and_eval(model, optimizer, loss_func, dataset, testset, epochs, task, device):
 
-    tl = [] ; ta = [] ; el = [] ; ea = []
+    train_loss_list, train_acc_list, eval_loss_list, eval_acc_list = [], [], [], []
 
     eval_loss, eval_acc = eval_epoch(model=model, loss_func=loss_func, test_set=testset, device=device)
     print("*" * 25)
@@ -93,24 +93,14 @@ def train_and_eval(model, optimizer, loss_func, dataset, testset, epochs, task, 
         eval_loss, eval_acc = eval_epoch(model=model, loss_func=loss_func, test_set=testset, device=device)
         print("#Epoch {} - Train Loss: {:.5f}, Train Accuracy: {:.2f}, Eval Loss: {:.5f}, Eval Accuracy: {:.2f}"
               .format(epoch, train_loss, 100*train_acc, eval_loss, 100*eval_acc))
-        tl.append(train_loss) ; ta.append(train_acc * 100) ; el.append(eval_loss) ; ea.append(eval_acc * 100)
-        if (train_acc == 1.0 and eval_acc == 1.0) or train_loss < 1e-4:
+        train_loss_list.append(train_loss)
+        train_acc_list.append(train_acc * 100)
+        eval_loss_list.append(eval_loss)
+        eval_acc_list.append(eval_acc * 100)
+        if (train_acc == 1.0 and eval_acc == 1.0) or train_loss < 1e-6:
             break
 
-    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
-    axes[0].plot(tl, label="Train")
-    axes[0].plot(el, label="Eval")
-    axes[0].set_title(task + " " + model_str+" -Loss")
-    axes[0].legend()
-    axes[1].plot(ta, label="Train")
-    axes[1].plot(ea, label="Eval")
-    axes[1].set_title(task + " " + model_str + " -Accuracy")
-    axes[1].legend()
-    plt.show()
-    # TODO: save the best model not the last one
-    torch.save(model, "./trained_"+task+"_model.torch")
-
-    return train_acc, eval_acc
+    return train_loss_list, train_acc_list, eval_loss_list, eval_acc_list
 
 
 def classify_image(model, im, resize, device):
@@ -122,7 +112,10 @@ def classify_image(model, im, resize, device):
     return predicted.item()
 
 
-def hpo(data_dir, resize, criterion, device):
+def hpo(data_dir, resize, criterion, device, path=None):
+
+    best_acc_eval = 0
+    best_acc_train = 0
 
     task = data_dir.split('\\')[-1]
     output = len(os.listdir(data_dir))
@@ -133,10 +126,12 @@ def hpo(data_dir, resize, criterion, device):
                    (1, 2),
                    (1, 3),
                    (2, 2)]
+    batch_list = [4, 16, 64, 128]
+    lr_list = [1e-2, 5e-2, 1e-3, 5e-3, 1e-4, 5e-4]
 
-    for params in [(3, 3)]:
-        for batch_size in [4, 64]:
-            for lr in [1e-3]:
+    for params in params_list:
+        for batch_size in batch_list:
+            for lr in lr_list:
                 data_train, data_validation = get_data_loader(data_dir=data_dir, batch_size=batch_size, height=resize[0], width=resize[1])
 
                 conv, fc = params
@@ -144,10 +139,29 @@ def hpo(data_dir, resize, criterion, device):
 
                 model = get_model(width=resize[1], height=resize[0], channels=3, output=output, conv=conv, fc=fc).to(device)
                 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-                train_acc, eval_acc = train_and_eval(model=model, optimizer=optimizer, loss_func=criterion,
-                                                     dataset=data_train, testset=data_validation,
-                                                     epochs=25, task=task, device=device, model_str=model_str)
+                train_loss_list, train_acc_list, eval_loss_list, eval_acc_list = train_and_eval(model=model, optimizer=optimizer, loss_func=criterion,
+                                                                                                dataset=data_train, testset=data_validation,
+                                                                                                epochs=25, task=task, device=device)
 
-                if train_acc == 1.0 and eval_acc == 1.0:
+                fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+                axes[0].plot(train_loss_list, label="Train")
+                axes[0].plot(eval_loss_list, label="Eval")
+                axes[0].set_title(task + " " + model_str + " -Loss")
+                axes[0].legend()
+                axes[1].plot(train_acc_list, label="Train")
+                axes[1].plot(eval_acc_list, label="Eval")
+                axes[1].set_title(task + " " + model_str + " -Accuracy")
+                axes[1].legend()
+                if path is None:
+                    plt.show()
+                else:
+                    plt.savefig(f"{path}/{model_str}.png")
+                plt.clf()
+
+                if (eval_acc_list[-1] > best_acc_eval) or (eval_acc_list[-1] == best_acc_eval and train_acc_list[-1] > best_acc_train):
+                    print(f"-I- Saved {task} with {model_str}")
+                    torch.save(model, "./trained_" + task + "_model.torch")
+
+                if train_acc_list[-1] == 1.0 and eval_acc_list[-1] == 1.0:
                     return
 
