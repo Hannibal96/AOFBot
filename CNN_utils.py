@@ -117,16 +117,21 @@ def hpo(data_dir, resize, criterion, device, path=None):
     best_acc_eval = 0
     best_acc_train = 0
 
-    task = data_dir.split('\\')[-1]
+    task = data_dir.split('/')[-1]
     output = len(os.listdir(data_dir))
 
-    params_list = [(0, 1),
-                   (0, 2),
-                   (1, 1),
-                   (1, 2),
-                   (1, 3),
-                   (2, 2)]
-    batch_list = [4, 16, 64, 128]
+    params_list = [
+                   (2, 2),
+                   (2, 3),
+                   (3, 1),
+                   (3, 2),
+                   (3, 3),
+                   (4, 1),
+                   (4, 2),
+                   (4, 3),
+                   (4, 4),
+                   ]
+    batch_list = [4, 16, 64, 128, 256]
     lr_list = [1e-2, 5e-2, 1e-3, 5e-3, 1e-4, 5e-4]
 
     for params in params_list:
@@ -141,27 +146,35 @@ def hpo(data_dir, resize, criterion, device, path=None):
                 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
                 train_loss_list, train_acc_list, eval_loss_list, eval_acc_list = train_and_eval(model=model, optimizer=optimizer, loss_func=criterion,
                                                                                                 dataset=data_train, testset=data_validation,
-                                                                                                epochs=25, task=task, device=device)
+                                                                                                epochs=100, task=task, device=device)
 
-                fig, axes = plt.subplots(1, 2, figsize=(15, 5))
-                axes[0].plot(train_loss_list, label="Train")
-                axes[0].plot(eval_loss_list, label="Eval")
-                axes[0].set_title(task + " " + model_str + " -Loss")
-                axes[0].legend()
-                axes[1].plot(train_acc_list, label="Train")
-                axes[1].plot(eval_acc_list, label="Eval")
-                axes[1].set_title(task + " " + model_str + " -Accuracy")
-                axes[1].legend()
-                if path is None:
-                    plt.show()
-                else:
-                    plt.savefig(f"{path}/{model_str}.png")
-                plt.clf()
+                last_eval_acc = eval_acc_list[-1]
+                last_train_acc = train_acc_list[-1]
 
-                if (eval_acc_list[-1] > best_acc_eval) or (eval_acc_list[-1] == best_acc_eval and train_acc_list[-1] > best_acc_train):
+                if (last_eval_acc > best_acc_eval) or (last_eval_acc == best_acc_eval and last_train_acc > best_acc_train):
                     print(f"-I- Saved {task} with {model_str}")
                     torch.save(model, "./trained_" + task + "_model.torch")
+                    best_acc_eval = last_eval_acc
+                    best_acc_train = last_train_acc
 
-                if train_acc_list[-1] == 1.0 and eval_acc_list[-1] == 1.0:
+                    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+                    axes[0].plot(train_loss_list, label="Train")
+                    axes[0].plot(eval_loss_list, label="Eval")
+                    axes[0].set_title(task + " " + model_str + " -Loss")
+                    axes[0].legend()
+                    axes[0].grid()
+                    axes[1].plot(train_acc_list, label="Train")
+                    axes[1].plot(eval_acc_list, label="Eval")
+                    axes[1].set_title(task + " " + model_str + " -Accuracy")
+                    axes[1].legend()
+                    axes[1].grid()
+                    if path is None:
+                        plt.show()
+                    else:
+                        plt.savefig(f"{path}/{task}_{model_str}_{round(last_eval_acc, 1)}%.png")
+                    plt.clf()
+
+
+                if last_eval_acc == 100.0 and last_train_acc == 100.0:
                     return
 
