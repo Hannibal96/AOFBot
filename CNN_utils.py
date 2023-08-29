@@ -193,7 +193,6 @@ def hpo(data_dir, resize, criterion, device, path=None):
                         plt.savefig(f"{path}/{task}_{model_str}_{round(last_eval_acc, 1)}%.png")
                     plt.clf()
 
-
                 if last_eval_acc == 100.0 and last_train_acc == 100.0:
                     return
 
