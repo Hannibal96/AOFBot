@@ -5,10 +5,11 @@ import cv2
 from utils_table import *
 from Enums import *
 from CNN_utils import *
+from Card import Card
 
 
 class AOFTable:
-    def __init__(self, name, hwnd, dealer_model, blinds_model, action_model, device):
+    def __init__(self, name, hwnd, dealer_model, blinds_model, action_model, value_model, suit_model, device):
         self.name = name
         self.short_name = squeeze_name(name)
         self.hwnd = hwnd
@@ -27,6 +28,9 @@ class AOFTable:
         for location in Location:
             self.curr_location_position_mapping[location] = Position.SittingOut
 
+        self.left_card = None
+        self.right_card = None
+
         self.valid = False
 
         self.hands_counter = 0
@@ -34,6 +38,9 @@ class AOFTable:
         self.dealer_model = dealer_model
         self.blinds_model = blinds_model
         self.action_model = action_model
+        self.value_model = value_model
+        self.suit_model = suit_model
+
         self.device = device
 
     def get_name(self):
@@ -137,9 +144,9 @@ class AOFTable:
     def find_button_location(self, save=False):
         prev = self.curr_dealer_location
         dealer_top = dealer_right = dealer_left = dealer_bottom = 0
-        res = [dealer_top, dealer_right, dealer_bottom, dealer_left]
 
         while True:
+            res = [dealer_top, dealer_right, dealer_bottom, dealer_left]
             self.screen_shot()
 
             dealer_top = self.zoom_in(name='dealer_top', cor_x=int(self.x_size * button_top_x_cor_rel),
@@ -166,7 +173,6 @@ class AOFTable:
             dealer_right = classify_image(model=self.dealer_model, im=dealer_right, device=self.device, resize=dealer_resize)
             dealer_left = classify_image(model=self.dealer_model, im=dealer_left, device=self.device, resize=dealer_resize)
             dealer_bottom = classify_image(model=self.dealer_model, im=dealer_bottom, device=self.device, resize=dealer_resize)
-
             if res == [dealer_top, dealer_right, dealer_bottom, dealer_left]:
                 break
 
@@ -182,8 +188,8 @@ class AOFTable:
         elif dealer_bottom:
             self.curr_dealer_location = Location.Bottom
 
-        else:
-            assert False, "-E- Didn't recognize Button"
+        #else:
+        #    assert False, "-E- Didn't recognize Button"
 
         if prev != self.curr_dealer_location:
             return True
@@ -253,7 +259,18 @@ class AOFTable:
                                  size_y=int(self.y_size * card_y_size_rel),
                                  size_x=int(self.x_size * card_x_size_rel), save=save)
 
-        # TODO: finish implement
+        left_suit = classify_image(model=self.suit_model, im=left_card, device=self.device, resize=suit_resize)
+        left_value = classify_image(model=self.value_model, im=left_card, device=self.device, resize=value_resize)
+        left_suit = suit_label_converter[left_suit]
+        left_value = value_label_converter[left_value]
+
+        right_suit = classify_image(model=self.suit_model, im=right_card, device=self.device, resize=suit_resize)
+        right_value = classify_image(model=self.value_model, im=right_card, device=self.device, resize=value_resize)
+        right_suit = suit_label_converter[right_suit]
+        right_value = value_label_converter[right_value]
+
+        self.left_card = Card(number=left_value, suit=left_suit)
+        self.right_card = Card(number=right_value, suit=right_suit)
 
     def read_villains_holding_cards(self, save=False):
         top_left_card = self.zoom_in(name='top_left_card',

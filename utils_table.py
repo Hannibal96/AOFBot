@@ -6,20 +6,20 @@ def squeeze_name(name):
 TOTAL_SUM_OF_LOCATIONS = 6
 TOTAL_SUM_OF_POSITIONS = 4
 
-button_top_x_cor_rel = 580 / 1280
-button_top_y_cor_rel = 240 / 911
+button_top_x_cor_rel = 570 / 1280
+button_top_y_cor_rel = 230 / 911
 
-button_right_x_cor_rel = 1055 / 1280
-button_right_y_cor_rel = 480 / 911
+button_right_x_cor_rel = 1050 / 1280
+button_right_y_cor_rel = 470 / 911
 
-button_left_x_cor_rel = 185 / 1280
-button_left_y_cor_rel = 480 / 911
+button_left_x_cor_rel = 180 / 1280
+button_left_y_cor_rel = 470 / 911
 
-button_bottom_x_cor_rel = 530 / 1280
-button_bottom_y_cor_rel = 632 / 911
+button_bottom_x_cor_rel = 520 / 1280
+button_bottom_y_cor_rel = 610 / 911
 
-button_x_size_rel = 40 / 1280
-button_y_size_rel = 40 / 911
+button_x_size_rel = 60 / 1280
+button_y_size_rel = 60 / 911
 
 
 blinds_top_x_cor_rel = 610 / 1280

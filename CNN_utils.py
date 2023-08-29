@@ -15,10 +15,29 @@ action_resize = (16, 64)
 suit_resize = (32, 64)
 value_resize = (32, 64)
 
-blinds_label_converter = {Action.AllIn: 0,
-                          Position.BigBlind: 1,
-                          Action.UnDecided: 2,
-                          Position: 3}
+blinds_label_converter = {0: Action.AllIn,
+                          1: Position.BigBlind,
+                          2: Action.UnDecided,
+                          3: Position}
+
+suit_label_converter = {0: Suits.Club,
+                        1: Suits.Diamond,
+                        2: Suits.Heart,
+                        3: Suits.Spade}
+
+value_label_converter = {0: Number.Ten,
+                         1: Number.Duce,
+                         2: Number.Three,
+                         3: Number.Four,
+                         4: Number.Five,
+                         5: Number.Six,
+                         6: Number.Seven,
+                         7: Number.Eight,
+                         8: Number.Nine,
+                         9: Number.Ace,
+                         10: Number.Jack,
+                         11: Number.King,
+                         12: Number.Queen}
 
 
 def plot_images(images, classification=''):
