@@ -57,10 +57,10 @@ holding_cards_right_right_x_cor_rel = 1165 / 1280
 holding_cards_right_right_y_cor_rel = 326 / 911
 
 holding_cards_bottom_left_x_cor_rel = 562 / 1280
-holding_cards_bottom_left_y_cor_rel = 683 / 911
+holding_cards_bottom_left_y_cor_rel = 673 / 911
 
 holding_cards_bottom_right_x_cor_rel = 628 / 1280
-holding_cards_bottom_right_y_cor_rel = 678 / 911
+holding_cards_bottom_right_y_cor_rel = 668 / 911
 
 holding_cards_left_left_x_cor_rel = 30 / 1280
 holding_cards_left_left_y_cor_rel = 333 / 911
@@ -86,4 +86,4 @@ community_cards_5_y_cor_rel = 372 / 911
 
 
 card_x_size_rel = 35 / 1280
-card_y_size_rel = 75 / 911
+card_y_size_rel = 85 / 911
