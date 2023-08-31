@@ -17,8 +17,8 @@ value_resize = (32, 64)
 
 blinds_label_converter = {0: Action.AllIn,
                           1: Position.BigBlind,
-                          2: Action.UnDecided,
-                          3: Position}
+                          2: Position.SittingOut,
+                          3: Position.SmallBlind}
 
 suit_label_converter = {0: Suits.Club,
                         1: Suits.Diamond,
