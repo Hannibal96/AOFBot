@@ -119,27 +119,27 @@ class AOFTable:
                 res = [blinds_top, blinds_right, blinds_bottom, blinds_left]
             self.valid = False
 
-        if blinds_top == blinds_label_converter[Position.BigBlind]:
+        if blinds_label_converter[blinds_top] == Position.BigBlind:
             self.curr_bb_location = Location.Top
-        elif blinds_right == blinds_label_converter[Position.BigBlind]:
+        elif blinds_label_converter[blinds_right] == Position.BigBlind:
             self.curr_bb_location = Location.Right
-        elif blinds_left == blinds_label_converter[Position.BigBlind]:
+        elif blinds_label_converter[blinds_left] == Position.BigBlind:
             self.curr_bb_location = Location.Left
-        elif blinds_bottom == blinds_label_converter[Position.BigBlind]:
+        elif blinds_label_converter[blinds_bottom] == Position.BigBlind:
             self.curr_bb_location = Location.Bottom
-        else:
-            assert False, "-E- Didn't recognize BB"
+        #else:
+        #    assert False, "-E- Didn't recognize BB"
 
-        if blinds_top == blinds_label_converter[Position.SmallBlind]:
-            self.curr_sb_location = Location.Top
-        elif blinds_right == blinds_label_converter[Position.SmallBlind]:
-            self.curr_sb_location = Location.Right
-        elif blinds_left == blinds_label_converter[Position.SmallBlind]:
-            self.curr_sb_location = Location.Left
-        elif blinds_bottom == blinds_label_converter[Position.SmallBlind]:
-            self.curr_sb_location = Location.Bottom
-        else:
-            assert False, "-E- Didn't recognize SB"
+        if blinds_label_converter[blinds_top] == Position.SmallBlind:
+            self.curr_bb_location = Location.Top
+        elif blinds_label_converter[blinds_right] == Position.SmallBlind:
+            self.curr_bb_location = Location.Right
+        elif blinds_label_converter[blinds_left] == Position.SmallBlind:
+            self.curr_bb_location = Location.Left
+        elif blinds_label_converter[blinds_bottom] == Position.SmallBlind:
+            self.curr_bb_location = Location.Bottom
+        #else:
+        #    assert False, "-E- Didn't recognize BB"
 
     def find_button_location(self, save=False):
         prev = self.curr_dealer_location

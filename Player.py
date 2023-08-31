@@ -22,22 +22,23 @@ if __name__ == "__main__":
 
     while True:
         for table in running_tables:
-            flag = False
             if table.is_table_visible():
                 table.fg_table()
-                if table.find_button_location(save=True):
+                if table.find_button_location(save=False):
                     table.update_hand_counter()
-                    print(table.name)
-                    print(table.curr_dealer_location)
-                    print(table.hands_counter)
 
                 if table.is_my_turn(save=False):
-                    #table.find_blinds_location(save=False)
+                    table.find_blinds_location(save=True)
                     #table.figure_table_structure()
                     table.read_holding_cards(save=True)
+                    print("="*10)
+                    print(table.name)
+                    print("=" * 10)
+                    print(f" * Dealer: {table.curr_dealer_location}")
+                    print(f" * SB: {table.curr_sb_location}")
+                    print(f" * BB: {table.curr_bb_location}")
+                    print(f" * #Hands: {table.hands_counter}")
                     print(table.left_card, table.right_card)
-                    print('\n ACT \n')
-
 
                 #table.read_community_cards(save=False)
                 #table.read_villains_holding_cards(save=False)
