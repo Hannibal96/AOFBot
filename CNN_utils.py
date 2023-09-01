@@ -131,7 +131,7 @@ def classify_image(model, im, resize, device):
     return predicted.item()
 
 
-def hpo(data_dir, resize, criterion, device, path=None):
+def hpo(data_dir, resize, criterion, device, epochs=100, path=None):
 
     best_acc_eval = 0
     best_acc_train = 0
@@ -172,7 +172,7 @@ def hpo(data_dir, resize, criterion, device, path=None):
                 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
                 train_loss_list, train_acc_list, eval_loss_list, eval_acc_list = train_and_eval(model=model, optimizer=optimizer, loss_func=criterion,
                                                                                                 dataset=data_train, testset=data_validation,
-                                                                                                epochs=100, task=task, device=device)
+                                                                                                epochs=epochs, task=task, device=device)
 
                 last_eval_acc = eval_acc_list[-1]
                 last_train_acc = train_acc_list[-1]
