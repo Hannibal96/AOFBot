@@ -24,10 +24,11 @@ if __name__ == "__main__":
         for table in running_tables:
             if table.is_table_visible():
                 table.fg_table()
-                if table.find_button_location(save=False):
+                if table.find_button_location(save=True):
                     table.update_hand_counter()
+                    print("dealer")
 
-                if table.is_my_turn(save=False):
+                if table.is_my_turn(save=True):
                     table.find_blinds_location(save=True)
                     #table.figure_table_structure()
                     table.read_holding_cards(save=True)

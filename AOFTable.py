@@ -131,13 +131,13 @@ class AOFTable:
         #    assert False, "-E- Didn't recognize BB"
 
         if blinds_label_converter[blinds_top] == Position.SmallBlind:
-            self.curr_bb_location = Location.Top
+            self.curr_sb_location = Location.Top
         elif blinds_label_converter[blinds_right] == Position.SmallBlind:
-            self.curr_bb_location = Location.Right
+            self.curr_sb_location = Location.Right
         elif blinds_label_converter[blinds_left] == Position.SmallBlind:
-            self.curr_bb_location = Location.Left
+            self.curr_sb_location = Location.Left
         elif blinds_label_converter[blinds_bottom] == Position.SmallBlind:
-            self.curr_bb_location = Location.Bottom
+            self.curr_sb_location = Location.Bottom
         #else:
         #    assert False, "-E- Didn't recognize BB"
 
