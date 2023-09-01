@@ -18,10 +18,10 @@ if __name__ == "__main__":
     value_dir = "pictures/Data/Value"
 
     #hpo(data_dir=button_dir, resize=dealer_resize, criterion=criterion, device=device, path="./train_logs")
-    #hpo(data_dir=blinds_dir, resize=blinds_resize, criterion=criterion, device=device, path="./train_logs")
+    hpo(data_dir=blinds_dir, resize=blinds_resize, criterion=criterion, device=device, path="./train_logs")
     #hpo(data_dir=action_dir, resize=action_resize, criterion=criterion, device=device, path="./train_logs")
     #hpo(data_dir=suit_dir, resize=suit_resize, criterion=criterion, device=device, path="./train_logs")
-    hpo(data_dir=value_dir, resize=value_resize, criterion=criterion, device=device, path="./train_logs")
+    #hpo(data_dir=value_dir, resize=value_resize, criterion=criterion, device=device, path="./train_logs")
 
 
 

@@ -7,7 +7,9 @@ def get_data_loader(data_dir, width=16, height=24, batch_size=128, train=False, 
     transform = {
         'train': transforms.Compose([
             transforms.Resize([height, width]),
-            transforms.RandomAffine(degrees=(-10, 10), translate=(0.1, 0.3), scale=(0.5,0.8)),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
+            transforms.RandomAffine(degrees=(-10, 10), translate=(0.1, 0.3), scale=(0.5, 0.8)),
+            #transforms.GaussianBlur(kernel_size=1),
             transforms.ToTensor(),
         ]),
         'test': transforms.Compose([
