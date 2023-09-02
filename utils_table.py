@@ -4,7 +4,7 @@ def squeeze_name(name):
 
 
 TOTAL_SUM_OF_LOCATIONS = 6
-TOTAL_SUM_OF_POSITIONS = 4
+TOTAL_SUM_OF_POSITIONS = 6
 
 button_top_x_cor_rel = 570 / 1280
 button_top_y_cor_rel = 230 / 911
@@ -87,3 +87,11 @@ community_cards_5_y_cor_rel = 372 / 911
 
 card_x_size_rel = 35 / 1280
 card_y_size_rel = 85 / 911
+
+
+act_allin_x_rel = 1165 / 1280
+act_allin_y_rel = 815 / 911
+
+act_fold_x_rel = 940 / 1280
+act_fold_y_rel = 815 / 911
+

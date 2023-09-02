@@ -15,6 +15,18 @@ class Position(Enum):
     BigBlind = 3
     SittingOut = -1
 
+    def __str__(self):
+        if self.value == 0:
+            return "CO"
+        if self.value == 1:
+            return "DE"
+        if self.value == 2:
+            return "SB"
+        if self.value == 3:
+            return "BB"
+        if self.value == -1:
+            return "XX"
+
 
 class Action(Enum):
     UnDecided = 0
@@ -31,6 +43,23 @@ class PreviousAction(Enum):
     TwoRaiseCutoffSmallBlind = 5
     TwoRaiseDealerSmallBlind = 6
     ThreeRaise = 6
+
+
+class State(Enum):
+    CO = 0
+    DE = 1
+    DE_CO = 2
+    SB = 3
+    SB_CO = 4
+    SB_DE = 5
+    SB_CO_DE = 6
+    BB_CO = 7
+    BB_DE = 8
+    BB_SB = 9
+    BB_CO_DE = 10
+    BB_CO_SB = 11
+    BB_DE_SB = 12
+    BB_CO_DE_SB = 13
 
 
 class Color:

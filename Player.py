@@ -3,6 +3,7 @@ import time
 from utils_player import find_running_tables_window, set_running_tables
 import torch
 
+
 if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -26,20 +27,16 @@ if __name__ == "__main__":
                 table.fg_table()
                 if table.find_button_location(save=True):
                     table.update_hand_counter()
-                    print("dealer")
 
                 if table.is_my_turn(save=True):
                     table.find_blinds_location(save=True)
-                    #table.figure_table_structure()
+                    table.figure_table_structure()
+                    table.figure_state()
                     table.read_holding_cards(save=True)
-                    print("="*10)
-                    print(table.name)
-                    print("=" * 10)
-                    print(f" * Dealer: {table.curr_dealer_location}")
-                    print(f" * SB: {table.curr_sb_location}")
-                    print(f" * BB: {table.curr_bb_location}")
-                    print(f" * #Hands: {table.hands_counter}")
-                    print(table.left_card, table.right_card)
+
+                    print(table)
+                    table.act()
+
 
                 #table.read_community_cards(save=False)
                 #table.read_villains_holding_cards(save=False)

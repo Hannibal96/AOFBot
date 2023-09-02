@@ -6,6 +6,7 @@ from utils_table import *
 from Enums import *
 from CNN_utils import *
 from Card import Card
+from Strategy import  *
 
 
 class AOFTable:
@@ -23,6 +24,7 @@ class AOFTable:
         self.curr_dealer_location = None
         self.curr_sb_location = None
         self.curr_bb_location = None
+        self.curr_all_ins = []
 
         self.curr_location_position_mapping = {}
         for location in Location:
@@ -30,6 +32,8 @@ class AOFTable:
 
         self.left_card = None
         self.right_card = None
+
+        self.curr_state = None
 
         self.valid = False
 
@@ -84,6 +88,10 @@ class AOFTable:
         blinds_top = blinds_right = blinds_left = blinds_bottom = 0
         res = [blinds_top, blinds_right, blinds_bottom, blinds_left]
 
+        self.curr_sb_location = None
+        self.curr_bb_location = None
+        self.curr_all_ins = []
+
         while True:
             self.screen_shot()
 
@@ -113,11 +121,9 @@ class AOFTable:
             blinds_bottom = classify_image(model=self.blinds_model, im=blinds_bottom, device=self.device, resize=blinds_resize)
 
             if res == [blinds_top, blinds_right, blinds_bottom, blinds_left]:
-                self.valid = True
                 break
             else:
                 res = [blinds_top, blinds_right, blinds_bottom, blinds_left]
-            self.valid = False
 
         if blinds_label_converter[blinds_top] == Position.BigBlind:
             self.curr_bb_location = Location.Top
@@ -127,8 +133,8 @@ class AOFTable:
             self.curr_bb_location = Location.Left
         elif blinds_label_converter[blinds_bottom] == Position.BigBlind:
             self.curr_bb_location = Location.Bottom
-        #else:
-        #    assert False, "-E- Didn't recognize BB"
+        else:
+            assert False, "-E- Didn't recognize BB"
 
         if blinds_label_converter[blinds_top] == Position.SmallBlind:
             self.curr_sb_location = Location.Top
@@ -138,8 +144,18 @@ class AOFTable:
             self.curr_sb_location = Location.Left
         elif blinds_label_converter[blinds_bottom] == Position.SmallBlind:
             self.curr_sb_location = Location.Bottom
-        #else:
-        #    assert False, "-E- Didn't recognize BB"
+
+        if blinds_label_converter[blinds_top] == Action.AllIn:
+            self.curr_all_ins.append(Location.Top)
+        elif blinds_label_converter[blinds_right] == Action.AllIn:
+            self.curr_all_ins.append(Location.Right)
+        elif blinds_label_converter[blinds_left] == Action.AllIn:
+            self.curr_all_ins.append(Location.Left)
+        elif blinds_label_converter[blinds_bottom] == Action.AllIn:
+            self.curr_all_ins.append(Location.Bottom)
+
+        if self.curr_bb_location in self.curr_all_ins:
+            assert False, "-E- Allin in BB"
 
     def find_button_location(self, save=False):
         prev = self.curr_dealer_location
@@ -196,46 +212,97 @@ class AOFTable:
         return False
 
     def figure_table_structure(self):
-        if not self.valid:
-            return
+
+        print(f"DE: {self.curr_dealer_location.value}")
+        print(f"SB: {self.curr_sb_location}")
+        print(f"BB: {self.curr_bb_location.value}")
 
         self.curr_location_position_mapping[self.curr_dealer_location] = Position.Dealer
-        self.curr_location_position_mapping[self.curr_sb_location] = Position.SmallBlind
         self.curr_location_position_mapping[self.curr_bb_location] = Position.BigBlind
 
         # classic case no jumps in the order of blinds and button
-        if self.curr_dealer_location.value == (self.curr_sb_location.value - 1) % 4 == \
-                (self.curr_bb_location.value - 2) % 4:
-            remain_location = Location(TOTAL_SUM_OF_LOCATIONS - self.curr_bb_location.value -
-                                       self.curr_sb_location.value - self.curr_dealer_location.value)
-            self.curr_location_position_mapping[remain_location] = Position.CutOff
+        if self.curr_dealer_location.value == (self.curr_bb_location.value - 2) % 4:
+            self.curr_location_position_mapping[Location((self.curr_bb_location.value - 1) % 4)] = Position.SmallBlind
+            self.curr_location_position_mapping[Location((self.curr_bb_location.value - 3) % 4)] = Position.CutOff
 
         # one sitting out in the middle, not cutoff
-        elif (self.curr_dealer_location.value == (self.curr_sb_location.value - 1) % 4 ==
-                (self.curr_bb_location.value - 3) % 4) or \
-                (self.curr_dealer_location.value == (self.curr_sb_location.value - 2) % 4 ==
-                 (self.curr_bb_location.value - 3) % 4):
-            remain_location = Location(TOTAL_SUM_OF_LOCATIONS - self.curr_bb_location.value -
-                                       self.curr_sb_location.value - self.curr_dealer_location.value)
-            self.curr_location_position_mapping[remain_location] = Position.SittingOut
+        elif self.curr_dealer_location.value == (self.curr_bb_location.value - 3) % 4:
+            if self.curr_sb_location is None:
+                if Position[(self.curr_bb_location.value - 1) % 4] in self.curr_all_ins:
+                    self.curr_location_position_mapping[Position((self.curr_bb_location.value - 1) % 4)] = Position.SmallBlind
+                    self.curr_location_position_mapping[Position((self.curr_bb_location.value - 2) % 4)] = Position.SittingOut
 
-        # two players sitting out
-        elif self.curr_dealer_location == self.curr_sb_location:
-
-            if (self.curr_bb_location.value - 1) % 4 == self.curr_dealer_location.value:
-                self.curr_location_position_mapping[Location((self.curr_bb_location.value + 1) % 4)] = Position.SittingOut
-                self.curr_location_position_mapping[Location((self.curr_bb_location.value + 2) % 4)] = Position.SittingOut
-
-            elif (self.curr_bb_location.value - 2) % 4 == self.curr_dealer_location.value:
-                self.curr_location_position_mapping[Location((self.curr_bb_location.value + 1) % 4)] = Position.SittingOut
-                self.curr_location_position_mapping[Location((self.curr_bb_location.value - 1) % 4)] = Position.SittingOut
-
-            elif (self.curr_bb_location.value + 1) % 4 == self.curr_dealer_location.value:
-                self.curr_location_position_mapping[Location((self.curr_bb_location.value + 2) % 4)] = Position.SittingOut
-                self.curr_location_position_mapping[Location((self.curr_bb_location.value - 1) % 4)] = Position.SittingOut
+                elif Position[(self.curr_bb_location.value - 2) % 4] in self.curr_all_ins:
+                    self.curr_location_position_mapping[Position((self.curr_bb_location.value - 1) % 4)] = Position.SittingOut
+                    self.curr_location_position_mapping[Position((self.curr_bb_location.value - 2) % 4)] = Position.SmallBlind
 
             else:
-                assert False, "-E- impossible table structure"
+                remaining_pos = TOTAL_SUM_OF_POSITIONS - self.curr_sb_location.value - self.curr_bb_location.value - self.curr_dealer_location.value
+                remaining_pos = Position(remaining_pos)
+                self.curr_location_position_mapping[remaining_pos] = Position.SittingOut
+                self.curr_location_position_mapping[self.curr_sb_location] = Position.SmallBlind
+
+        # two players sitting out
+        elif self.curr_dealer_location == (self.curr_bb_location.value - 1) % 4:
+            for location in Location:
+                if location not in [self.curr_bb_location, self.curr_dealer_location]:
+                    self.curr_location_position_mapping[location] = Position.SittingOut
+
+        else:
+            assert False, "-E- impossible table structure"
+
+    def _figure_state(self):
+
+        if self.curr_location_position_mapping[Location.Bottom] == Position.CutOff:
+            assert len(self.curr_all_ins) == 0
+            return State.CO
+
+        if self.curr_location_position_mapping[Location.Bottom] == Position.Dealer:
+            assert len(self.curr_all_ins) <= 1
+            if len(self.curr_all_ins) == 1:
+                assert self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.CutOff
+                return State.DE_CO
+            else:
+                return State.DE
+
+        if self.curr_location_position_mapping[Location.Bottom] == Position.SmallBlind:
+            assert len(self.curr_all_ins) <= 2
+            if len(self.curr_all_ins) == 0:
+                return State.SB
+            if len(self.curr_all_ins) == 1:
+                if self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.CutOff:
+                    return State.SB_CO
+                if self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.Dealer:
+                    return State.SB_CO
+            if len(self.curr_all_ins) == 2:
+                assert self.curr_location_position_mapping[self.curr_all_ins[0]] in [Position.CutOff, Position.Dealer]
+                assert self.curr_location_position_mapping[self.curr_all_ins[1]] in [Position.CutOff, Position.Dealer]
+                return State.SB_CO_DE
+
+        if self.curr_location_position_mapping[Location.Bottom] == Position.BigBlind:
+            assert len(self.curr_all_ins) >= 1
+            if len(self.curr_all_ins) == 1:
+                if self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.CutOff:
+                    return State.BB_CO
+                if self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.Dealer:
+                    return State.BB_DE
+                if self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.SmallBlind:
+                    return State.BB_SB
+            if len(self.curr_all_ins) == 3:
+                return State.BB_CO_DE_SB
+            if len(self.curr_all_ins) == 2:
+                if not Position.CutOff in [self.curr_location_position_mapping[self.curr_all_ins[0]], self.curr_location_position_mapping[self.curr_all_ins[1]]]:
+                    return State.BB_DE_SB
+                if not Position.Dealer in [self.curr_location_position_mapping[self.curr_all_ins[0]], self.curr_location_position_mapping[self.curr_all_ins[1]]]:
+                    return State.BB_CO_SB
+                if not Position.SmallBlind in [self.curr_location_position_mapping[self.curr_all_ins[0]], self.curr_location_position_mapping[self.curr_all_ins[1]]]:
+                    return State.BB_CO_DE
+            assert False
+
+        assert False
+
+    def figure_state(self):
+        self.curr_state = self._figure_state()
 
     def is_my_turn(self, save=False):
         self.screen_shot()
@@ -271,6 +338,28 @@ class AOFTable:
 
         self.left_card = Card(number=left_value, suit=left_suit)
         self.right_card = Card(number=right_value, suit=right_suit)
+
+    def _all_in(self):
+        x = int(self.cor_x_high + self.x_size * act_allin_x_rel + np.random.randint(low=-50, high=50))
+        y = int(self.cor_y_high + self.y_size * act_allin_y_rel + np.random.randint(low=-20, high=20))
+        print(f"Allin: {x, y}")
+        pyautogui.doubleClick(x, y)
+
+    def _fold(self):
+        x = int(self.cor_x_high + self.x_size * act_fold_x_rel + np.random.randint(low=-50, high=50))
+        y = int(self.cor_y_high + self.y_size * act_fold_y_rel + np.random.randint(low=-20, high=20))
+        print(f"Fold: {x, y}")
+        pyautogui.doubleClick(x, y)
+
+
+    def act(self):
+        action = decide_action(c1=self.left_card, c2=self.right_card, state=self.curr_state)
+        if action == Action.AllIn:
+            print("-I- Action: Allin")
+            self._all_in()
+        else:
+            print("-I- Action: Fold")
+            self._fold()
 
     def read_villains_holding_cards(self, save=False):
         top_left_card = self.zoom_in(name='top_left_card',
@@ -336,20 +425,23 @@ class AOFTable:
                                         size_y=int(self.y_size * card_y_size_rel),
                                         size_x=int(self.x_size * card_x_size_rel), save=save)
 
-    def read_actions_history(self, save=False):
-        pass
-        # TODO: implement
-
     def __str__(self):
         table_str = "*"*10 + " " + self.name + " " + "*"*10 + "\n"
-        table_str += "*"*5 + " Coordinates: " + str(self.coordinates) + "\n"
         table_str += "*" * 5 + " # Hand: " + str(self.hands_counter) + "\n"
-        table_str += "*"*5 + " Dealer Location: " + str(self.curr_dealer_location) + "\n"
-        table_str += "*" * 5 + " SB Location: " + str(self.curr_sb_location) + "\n"
-        table_str += "*" * 5 + " BB Location: " + str(self.curr_bb_location) + "\n"
+        #table_str += "*"*5 + " Dealer Location: " + str(self.curr_dealer_location) + "\n"
+        #table_str += "*" * 5 + " SB Location: " + str(self.curr_sb_location) + "\n"
+        #table_str += "*" * 5 + " BB Location: " + str(self.curr_bb_location) + "\n"
 
-        for location in Location:
-            table_str += "*" * 5 + " " + str(location) + ': ' + str(self.curr_location_position_mapping[location]) + "\n"
+        table_str += f"{' ' * 10} {self.curr_location_position_mapping[Location.Top]} {' ' * 5} \n"
+        table_str += "\n"
+        table_str += f"{self.curr_location_position_mapping[Location.Left]} {' ' * 10} {self.curr_location_position_mapping[Location.Right]} \n"
+        table_str += "\n"
+        table_str += f"{' ' * 10} {self.curr_location_position_mapping[Location.Bottom]} {' ' * 5} \n"
+        table_str += "\n"
+        table_str += f"{self.left_card} {self.right_card} \n"
+
+        table_str += f"{self.curr_all_ins}"
+        table_str += f"{self.curr_state}"
 
         return table_str
 
