@@ -267,12 +267,14 @@ class AOFTable:
             for location in Location:
                 if location not in [self.curr_bb_location, self.curr_dealer_location]:
                     self.curr_location_position_mapping[location] = Position.SittingOut
+            self.curr_location_position_mapping[self.curr_dealer_location] = Position.SmallBlind
 
         elif self.curr_sb_location is None and self.curr_dealer_location in self.curr_all_ins:
             print(" 2 Players case II")
             for location in Location:
                 if location not in [self.curr_bb_location, self.curr_dealer_location]:
                     assert location not in self.curr_all_ins, "-E- impossible table structure"
+            self.curr_location_position_mapping[self.curr_dealer_location] = Position.SmallBlind
 
         else:
             assert False, "-E- impossible table structure"
@@ -299,7 +301,7 @@ class AOFTable:
                 if self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.CutOff:
                     return State.SB_CO
                 if self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.Dealer:
-                    return State.SB_CO
+                    return State.SB_DE
             if len(self.curr_all_ins) == 2:
                 assert self.curr_location_position_mapping[self.curr_all_ins[0]] in [Position.CutOff, Position.Dealer]
                 assert self.curr_location_position_mapping[self.curr_all_ins[1]] in [Position.CutOff, Position.Dealer]
@@ -317,11 +319,11 @@ class AOFTable:
             if len(self.curr_all_ins) == 3:
                 return State.BB_CO_DE_SB
             if len(self.curr_all_ins) == 2:
-                if not Position.CutOff in [self.curr_location_position_mapping[self.curr_all_ins[0]], self.curr_location_position_mapping[self.curr_all_ins[1]]]:
+                if Position.CutOff not in [self.curr_location_position_mapping[self.curr_all_ins[0]], self.curr_location_position_mapping[self.curr_all_ins[1]]]:
                     return State.BB_DE_SB
-                if not Position.Dealer in [self.curr_location_position_mapping[self.curr_all_ins[0]], self.curr_location_position_mapping[self.curr_all_ins[1]]]:
+                if Position.Dealer not in [self.curr_location_position_mapping[self.curr_all_ins[0]], self.curr_location_position_mapping[self.curr_all_ins[1]]]:
                     return State.BB_CO_SB
-                if not Position.SmallBlind in [self.curr_location_position_mapping[self.curr_all_ins[0]], self.curr_location_position_mapping[self.curr_all_ins[1]]]:
+                if Position.SmallBlind not in [self.curr_location_position_mapping[self.curr_all_ins[0]], self.curr_location_position_mapping[self.curr_all_ins[1]]]:
                     return State.BB_CO_DE
             assert False
 
@@ -462,13 +464,30 @@ class AOFTable:
         right_in = int(Location.Right in self.curr_all_ins)
         bottom_in = int(Location.Bottom in self.curr_all_ins)
 
-        table_str += f"{' ' * 13}{top_in * '**' + (1-top_in) * '  '}{self.curr_location_position_mapping[Location.Top]}{top_in * '**' + (1-top_in) * '  '}\n"
-        table_str += "\n"
-        table_str += f"{' ' * 3}{left_in * '**' + (1-left_in) * '  '}{self.curr_location_position_mapping[Location.Left]} {left_in * '**' + (1-left_in) * '  '} " \
-                     f"{' ' * 11} {right_in * '**' + (1-right_in) * '  '}{self.curr_location_position_mapping[Location.Right]}{right_in * '**' + (1-right_in) * '  '} \n"
-        table_str += "\n"
-        table_str += f"{' ' * 13}{bottom_in * '**' + (1-bottom_in) * '  '}{self.curr_location_position_mapping[Location.Bottom]} {bottom_in * '**' + (1-bottom_in) * '  '} \n"
-        table_str += "\n"
+        top_dealer = int(Location.Top == self.curr_dealer_location)
+        left_dealer = int(Location.Left == self.curr_dealer_location)
+        right_dealer = int(Location.Right == self.curr_dealer_location)
+        bottom_dealer = int(Location.Bottom == self.curr_dealer_location)
+
+        top_bb = int(Location.Top == self.curr_bb_location)
+        left_bb = int(Location.Left == self.curr_bb_location)
+        right_bb = int(Location.Right == self.curr_bb_location)
+        bottom_bb = int(Location.Bottom == self.curr_bb_location)
+
+        dealer_str = Color.GREEN + 'o ' + Color.END
+        bb_str = Color.YELLOW + 'bb ' + Color.END
+        sb_str = Color.YELLOW + 'sb ' + Color.END
+
+        table_str += f"{' ' * 15}{top_in * (Color.BOLD+Color.UNDERLINE)}{self.curr_location_position_mapping[Location.Top]}{top_in * Color.END}\n"
+        table_str += f"{' ' * 15}{top_bb * bb_str}{top_dealer * dealer_str}\n"
+        table_str += f"{' ' * 5}{left_in * (Color.BOLD+Color.UNDERLINE)}{self.curr_location_position_mapping[Location.Left]}{left_in * Color.END}" \
+                     f" {left_bb * bb_str + left_dealer * dealer_str}" \
+                     f"{' ' * 20} " \
+                     f"{right_bb * bb_str + right_dealer * dealer_str + right_in * (Color.BOLD+Color.UNDERLINE)}" \
+                     f"{self.curr_location_position_mapping[Location.Right]}{right_in * Color.END}\n"
+        table_str += f"{' ' * 15}{bottom_bb * bb_str + bottom_dealer * dealer_str}\n"
+        table_str += f"{' ' * 15}{bottom_in * (Color.BOLD+Color.UNDERLINE)}{self.curr_location_position_mapping[Location.Bottom]}{bottom_in * Color.END} \n"
+
         table_str += f"{self.left_card} {self.right_card} \n"
 
         table_str += f"{self.curr_all_ins}"
