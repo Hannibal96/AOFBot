@@ -125,33 +125,38 @@ class AOFTable:
             else:
                 res = [blinds_top, blinds_right, blinds_bottom, blinds_left]
 
-        if blinds_label_converter[blinds_top] == Position.BigBlind:
+        blinds_top = blinds_label_converter[blinds_top]
+        blinds_right = blinds_label_converter[blinds_right]
+        blinds_left = blinds_label_converter[blinds_left]
+        blinds_bottom = blinds_label_converter[blinds_bottom]
+
+        if blinds_top == Position.BigBlind:
             self.curr_bb_location = Location.Top
-        elif blinds_label_converter[blinds_right] == Position.BigBlind:
+        elif blinds_right == Position.BigBlind:
             self.curr_bb_location = Location.Right
-        elif blinds_label_converter[blinds_left] == Position.BigBlind:
+        elif blinds_left == Position.BigBlind:
             self.curr_bb_location = Location.Left
-        elif blinds_label_converter[blinds_bottom] == Position.BigBlind:
+        elif blinds_bottom == Position.BigBlind:
             self.curr_bb_location = Location.Bottom
         else:
             assert False, "-E- Didn't recognize BB"
 
-        if blinds_label_converter[blinds_top] == Position.SmallBlind:
+        if blinds_top == Position.SmallBlind:
             self.curr_sb_location = Location.Top
-        elif blinds_label_converter[blinds_right] == Position.SmallBlind:
+        elif blinds_right == Position.SmallBlind:
             self.curr_sb_location = Location.Right
-        elif blinds_label_converter[blinds_left] == Position.SmallBlind:
+        elif blinds_left == Position.SmallBlind:
             self.curr_sb_location = Location.Left
-        elif blinds_label_converter[blinds_bottom] == Position.SmallBlind:
+        elif blinds_bottom == Position.SmallBlind:
             self.curr_sb_location = Location.Bottom
 
-        if blinds_label_converter[blinds_top] == Action.AllIn:
+        if blinds_top == Action.AllIn:
             self.curr_all_ins.append(Location.Top)
-        elif blinds_label_converter[blinds_right] == Action.AllIn:
+        if blinds_right == Action.AllIn:
             self.curr_all_ins.append(Location.Right)
-        elif blinds_label_converter[blinds_left] == Action.AllIn:
+        if blinds_left == Action.AllIn:
             self.curr_all_ins.append(Location.Left)
-        elif blinds_label_converter[blinds_bottom] == Action.AllIn:
+        if blinds_bottom == Action.AllIn:
             self.curr_all_ins.append(Location.Bottom)
 
         if self.curr_bb_location in self.curr_all_ins:
@@ -213,40 +218,61 @@ class AOFTable:
 
     def figure_table_structure(self):
 
+        print("*" * 10)
+        print("*" * 10)
+        print("*" * 10)
         print(f"DE: {self.curr_dealer_location.value}")
-        print(f"SB: {self.curr_sb_location}")
+        print(f"SB: {self.curr_sb_location.value if self.curr_sb_location is not None else self.curr_sb_location}")
         print(f"BB: {self.curr_bb_location.value}")
+        print(f"{self.curr_all_ins}")
+        print("*" * 10)
+        print("*" * 10)
+        print("*" * 10)
 
         self.curr_location_position_mapping[self.curr_dealer_location] = Position.Dealer
         self.curr_location_position_mapping[self.curr_bb_location] = Position.BigBlind
 
-        # classic case no jumps in the order of blinds and button
-        if self.curr_dealer_location.value == (self.curr_bb_location.value - 2) % 4:
+        if (self.curr_dealer_location.value == (self.curr_bb_location.value - 2) % 4) and ((self.curr_sb_location is None and Location((self.curr_bb_location.value - 1) % 4) in self.curr_all_ins) or (
+                self.curr_sb_location is not None and self.curr_sb_location.value == (self.curr_bb_location.value - 1) % 4)):
+            print(" 4 Players case")
             self.curr_location_position_mapping[Location((self.curr_bb_location.value - 1) % 4)] = Position.SmallBlind
             self.curr_location_position_mapping[Location((self.curr_bb_location.value - 3) % 4)] = Position.CutOff
 
         # one sitting out in the middle, not cutoff
-        elif self.curr_dealer_location.value == (self.curr_bb_location.value - 3) % 4:
+        elif self.curr_dealer_location.value == (self.curr_bb_location.value - 3) % 4 and (
+                (self.curr_sb_location is not None and self.curr_sb_location != self.curr_dealer_location) or any(ai_loc != self.curr_dealer_location for ai_loc in self.curr_all_ins)):
+            print(" 3 Players case")
             if self.curr_sb_location is None:
-                if Position[(self.curr_bb_location.value - 1) % 4] in self.curr_all_ins:
-                    self.curr_location_position_mapping[Position((self.curr_bb_location.value - 1) % 4)] = Position.SmallBlind
-                    self.curr_location_position_mapping[Position((self.curr_bb_location.value - 2) % 4)] = Position.SittingOut
+                if Location((self.curr_bb_location.value - 1) % 4) in self.curr_all_ins:
+                    self.curr_location_position_mapping[Location((self.curr_bb_location.value - 1) % 4)] = Position.SmallBlind
+                    self.curr_location_position_mapping[Location((self.curr_bb_location.value - 2) % 4)] = Position.SittingOut
 
-                elif Position[(self.curr_bb_location.value - 2) % 4] in self.curr_all_ins:
-                    self.curr_location_position_mapping[Position((self.curr_bb_location.value - 1) % 4)] = Position.SittingOut
-                    self.curr_location_position_mapping[Position((self.curr_bb_location.value - 2) % 4)] = Position.SmallBlind
+                elif Location((self.curr_bb_location.value - 2) % 4) in self.curr_all_ins:
+                    self.curr_location_position_mapping[Location((self.curr_bb_location.value - 1) % 4)] = Position.SittingOut
+                    self.curr_location_position_mapping[Location((self.curr_bb_location.value - 2) % 4)] = Position.SmallBlind
+
+                else:
+                    assert False, "-E- impossible table structure"
 
             else:
-                remaining_pos = TOTAL_SUM_OF_POSITIONS - self.curr_sb_location.value - self.curr_bb_location.value - self.curr_dealer_location.value
-                remaining_pos = Position(remaining_pos)
-                self.curr_location_position_mapping[remaining_pos] = Position.SittingOut
+                remaining_loc = TOTAL_SUM_OF_LOCATIONS - self.curr_sb_location.value - self.curr_bb_location.value - self.curr_dealer_location.value
+                remaining_loc = Location(remaining_loc)
+                self.curr_location_position_mapping[remaining_loc] = Position.SittingOut
                 self.curr_location_position_mapping[self.curr_sb_location] = Position.SmallBlind
 
         # two players sitting out
-        elif self.curr_dealer_location == (self.curr_bb_location.value - 1) % 4:
+
+        elif self.curr_sb_location is not None and self.curr_sb_location == self.curr_dealer_location:
+            print(" 2 Players case I")
             for location in Location:
                 if location not in [self.curr_bb_location, self.curr_dealer_location]:
                     self.curr_location_position_mapping[location] = Position.SittingOut
+
+        elif self.curr_sb_location is None and self.curr_dealer_location in self.curr_all_ins:
+            print(" 2 Players case II")
+            for location in Location:
+                if location not in [self.curr_bb_location, self.curr_dealer_location]:
+                    assert location not in self.curr_all_ins, "-E- impossible table structure"
 
         else:
             assert False, "-E- impossible table structure"
@@ -351,7 +377,6 @@ class AOFTable:
         print(f"Fold: {x, y}")
         pyautogui.doubleClick(x, y)
 
-
     def act(self):
         action = decide_action(c1=self.left_card, c2=self.right_card, state=self.curr_state)
         if action == Action.AllIn:
@@ -432,11 +457,17 @@ class AOFTable:
         #table_str += "*" * 5 + " SB Location: " + str(self.curr_sb_location) + "\n"
         #table_str += "*" * 5 + " BB Location: " + str(self.curr_bb_location) + "\n"
 
-        table_str += f"{' ' * 10} {self.curr_location_position_mapping[Location.Top]} {' ' * 5} \n"
+        top_in = int(Location.Top in self.curr_all_ins)
+        left_in = int(Location.Left in self.curr_all_ins)
+        right_in = int(Location.Right in self.curr_all_ins)
+        bottom_in = int(Location.Bottom in self.curr_all_ins)
+
+        table_str += f"{' ' * 13}{top_in * '**' + (1-top_in) * '  '}{self.curr_location_position_mapping[Location.Top]}{top_in * '**' + (1-top_in) * '  '}\n"
         table_str += "\n"
-        table_str += f"{self.curr_location_position_mapping[Location.Left]} {' ' * 10} {self.curr_location_position_mapping[Location.Right]} \n"
+        table_str += f"{' ' * 3}{left_in * '**' + (1-left_in) * '  '}{self.curr_location_position_mapping[Location.Left]} {left_in * '**' + (1-left_in) * '  '} " \
+                     f"{' ' * 11} {right_in * '**' + (1-right_in) * '  '}{self.curr_location_position_mapping[Location.Right]}{right_in * '**' + (1-right_in) * '  '} \n"
         table_str += "\n"
-        table_str += f"{' ' * 10} {self.curr_location_position_mapping[Location.Bottom]} {' ' * 5} \n"
+        table_str += f"{' ' * 13}{bottom_in * '**' + (1-bottom_in) * '  '}{self.curr_location_position_mapping[Location.Bottom]} {bottom_in * '**' + (1-bottom_in) * '  '} \n"
         table_str += "\n"
         table_str += f"{self.left_card} {self.right_card} \n"
 
