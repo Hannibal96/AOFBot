@@ -368,24 +368,24 @@ class AOFTable:
         self.right_card = Card(number=right_value, suit=right_suit)
 
     def _all_in(self):
-        x = int(self.cor_x_high + self.x_size * act_allin_x_rel + np.random.randint(low=-50, high=50))
-        y = int(self.cor_y_high + self.y_size * act_allin_y_rel + np.random.randint(low=-20, high=20))
-        print(f"Allin: {x, y}")
-        pyautogui.doubleClick(x, y)
+        x = int(self.cor_x_high + self.x_size * act_allin_x_rel + np.random.randn() * 15 * self.x_size / 1280)
+        y = int(self.cor_y_high + self.y_size * act_allin_y_rel + np.random.randn() * 5 * self.y_size / 911)
+        print(f"-I- Allin: {x, y}")
+        pyautogui.moveTo(x, y, duration=0.1 + np.random.randn() * 0.01)
+        pyautogui.click(x, y)
 
     def _fold(self):
-        x = int(self.cor_x_high + self.x_size * act_fold_x_rel + np.random.randint(low=-50, high=50))
-        y = int(self.cor_y_high + self.y_size * act_fold_y_rel + np.random.randint(low=-20, high=20))
-        print(f"Fold: {x, y}")
-        pyautogui.doubleClick(x, y)
+        x = int(self.cor_x_high + self.x_size * act_fold_x_rel + np.random.randn() * 15 * self.x_size / 1280)
+        y = int(self.cor_y_high + self.y_size * act_fold_y_rel + np.random.randn() * 5 * self.y_size / 911)
+        print(f"-I- Fold: {x, y}")
+        pyautogui.moveTo(x, y, duration=0.1 + np.random.randn() * 0.01)
+        pyautogui.click(x, y)
 
     def act(self):
         action = decide_action(c1=self.left_card, c2=self.right_card, state=self.curr_state)
         if action == Action.AllIn:
-            print("-I- Action: Allin")
             self._all_in()
         else:
-            print("-I- Action: Fold")
             self._fold()
 
     def read_villains_holding_cards(self, save=False):
