@@ -218,7 +218,7 @@ class AOFTable:
 
     def figure_table_structure(self):
 
-        print("*" * 10)
+        """print("*" * 10)
         print("*" * 10)
         print("*" * 10)
         print(f"DE: {self.curr_dealer_location.value}")
@@ -227,21 +227,21 @@ class AOFTable:
         print(f"{self.curr_all_ins}")
         print("*" * 10)
         print("*" * 10)
-        print("*" * 10)
+        print("*" * 10)"""
 
         self.curr_location_position_mapping[self.curr_dealer_location] = Position.Dealer
         self.curr_location_position_mapping[self.curr_bb_location] = Position.BigBlind
 
         if (self.curr_dealer_location.value == (self.curr_bb_location.value - 2) % 4) and ((self.curr_sb_location is None and Location((self.curr_bb_location.value - 1) % 4) in self.curr_all_ins) or (
                 self.curr_sb_location is not None and self.curr_sb_location.value == (self.curr_bb_location.value - 1) % 4)):
-            print(" 4 Players case")
+            #print(" 4 Players case")
             self.curr_location_position_mapping[Location((self.curr_bb_location.value - 1) % 4)] = Position.SmallBlind
             self.curr_location_position_mapping[Location((self.curr_bb_location.value - 3) % 4)] = Position.CutOff
 
         # one sitting out in the middle, not cutoff
         elif self.curr_dealer_location.value == (self.curr_bb_location.value - 3) % 4 and (
                 (self.curr_sb_location is not None and self.curr_sb_location != self.curr_dealer_location) or any(ai_loc != self.curr_dealer_location for ai_loc in self.curr_all_ins)):
-            print(" 3 Players case")
+            #print(" 3 Players case")
             if self.curr_sb_location is None:
                 if Location((self.curr_bb_location.value - 1) % 4) in self.curr_all_ins:
                     self.curr_location_position_mapping[Location((self.curr_bb_location.value - 1) % 4)] = Position.SmallBlind
@@ -263,14 +263,14 @@ class AOFTable:
         # two players sitting out
 
         elif self.curr_sb_location is not None and self.curr_sb_location == self.curr_dealer_location:
-            print(" 2 Players case I")
+            #print(" 2 Players case I")
             for location in Location:
                 if location not in [self.curr_bb_location, self.curr_dealer_location]:
                     self.curr_location_position_mapping[location] = Position.SittingOut
             self.curr_location_position_mapping[self.curr_dealer_location] = Position.SmallBlind
 
         elif self.curr_sb_location is None and self.curr_dealer_location in self.curr_all_ins:
-            print(" 2 Players case II")
+            #print(" 2 Players case II")
             for location in Location:
                 if location not in [self.curr_bb_location, self.curr_dealer_location]:
                     assert location not in self.curr_all_ins, "-E- impossible table structure"
@@ -490,7 +490,7 @@ class AOFTable:
 
         table_str += f"{self.left_card} {self.right_card} \n"
 
-        table_str += f"{self.curr_all_ins}"
+        #table_str += f"{self.curr_all_ins}"
         table_str += f"{self.curr_state}"
 
         return table_str
