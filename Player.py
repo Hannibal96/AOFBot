@@ -2,6 +2,12 @@ from AOFTable import AOFTable, win32gui
 import time
 from utils_player import find_running_tables_window, set_running_tables
 import torch
+from multiprocessing import Process, Lock
+
+
+def run_table(table, lock):
+    pass
+
 
 
 if __name__ == "__main__":
