@@ -6,13 +6,14 @@ import torch
 
 if __name__ == "__main__":
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"
     print('Device:', device)
-    dealer_model = torch.load("./trained_Button_model.torch")
-    blinds_model = torch.load("./trained_Blinds_model.torch")
-    action_model = torch.load("./trained_Action_model.torch")
-    suit_model = torch.load("./trained_Suit_model.torch")
-    value_model = torch.load("./trained_Value_model.torch")
+    dealer_model = torch.load("./trained_Button_model.torch").to(device)
+    blinds_model = torch.load("./trained_Blinds_model.torch").to(device)
+    action_model = torch.load("./trained_Action_model.torch").to(device)
+    suit_model = torch.load("./trained_Suit_model.torch").to(device)
+    value_model = torch.load("./trained_Value_model.torch").to(device)
 
     print('Models Loaded')
 
