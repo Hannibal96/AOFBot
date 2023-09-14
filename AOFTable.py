@@ -11,7 +11,7 @@ from Strategy import  *
 
 
 class AOFTable:
-    def __init__(self, name, hwnd, dealer_model, blinds_model, action_model, value_model, suit_model, device):
+    def __init__(self, name, hwnd, dealer_model, blinds_model, action_model, value_model, suit_model, device, crusher):
         self.name = name
         self.short_name = squeeze_name(name)
         self.hwnd = hwnd
@@ -37,6 +37,7 @@ class AOFTable:
         self.curr_state = None
 
         self.valid = False
+        self.crusher = crusher
 
         self.hands_counter = 0
 
@@ -230,6 +231,8 @@ class AOFTable:
         print("*" * 10)
         print("*" * 10)"""
 
+        wrong_flag = False
+
         self.curr_location_position_mapping[self.curr_dealer_location] = Position.Dealer
         self.curr_location_position_mapping[self.curr_bb_location] = Position.BigBlind
 
@@ -253,7 +256,7 @@ class AOFTable:
                     self.curr_location_position_mapping[Location((self.curr_bb_location.value - 2) % 4)] = Position.SmallBlind
 
                 else:
-                    assert False, "-E- impossible table structure"
+                    wrong_flag = True
 
             else:
                 remaining_loc = TOTAL_SUM_OF_LOCATIONS - self.curr_sb_location.value - self.curr_bb_location.value - self.curr_dealer_location.value
@@ -274,13 +277,35 @@ class AOFTable:
             #print(" 2 Players case II")
             for location in Location:
                 if location not in [self.curr_bb_location, self.curr_dealer_location]:
-                    assert location not in self.curr_all_ins, "-E- impossible table structure"
+                    if location in self.curr_all_ins:
+                        wrong_flag = True
             self.curr_location_position_mapping[self.curr_dealer_location] = Position.SmallBlind
-
         else:
-            assert False, "-E- impossible table structure"
+            wrong_flag = True
+
+        self.valid = not wrong_flag
+        if not self.valid:
+            if self.crusher:
+                assert False, "-I- Impossible table structure"
+            print("-I- Incompatible table structure")
+            self.curr_location_position_mapping[Location.Bottom] = Position.SittingOut
+            self.curr_location_position_mapping[Location.Left] = Position.SittingOut
+            self.curr_location_position_mapping[Location.Right] = Position.SittingOut
+            self.curr_location_position_mapping[Location.Top] = Position.SittingOut
 
     def _figure_state(self):
+        if not self.valid:
+            if self.curr_bb_location == Location.Bottom:
+                fake_state = State.BB_CO
+            elif self.curr_dealer_location == Location.Bottom:
+                fake_state = State.DE
+            elif len(self.curr_all_ins) > 0:
+                fake_state = State.SB_CO
+            else:
+                fake_state = State.CO
+            print(f"-I- Incompatible table structure, Guessing {fake_state}")
+            self.valid = True
+            return fake_state
 
         if self.curr_location_position_mapping[Location.Bottom] == Position.CutOff:
             assert len(self.curr_all_ins) == 0
