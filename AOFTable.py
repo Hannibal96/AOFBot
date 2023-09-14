@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import win32gui
 import pyautogui
 import os
