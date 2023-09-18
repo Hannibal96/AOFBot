@@ -28,8 +28,7 @@ def run_table(table, saver, lock):
 
 
 if __name__ == "__main__":
-
-    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = "cpu"
     MP = True
     saver = False

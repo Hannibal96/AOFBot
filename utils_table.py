@@ -44,6 +44,16 @@ action_x_size_rel = 425 / 1280
 action_y_size_rel = 110 / 911
 
 
+hud_top_x_cor_rel = 170 / 1979
+hud_top_y_cor_rel = 265 / 1392
+
+hud_left_x_cor_rel = 310 / 1979
+hud_left_y_cor_rel = 625 / 1392
+
+hud_right_x_cor_rel = 950 / 1979
+hud_right_y_cor_rel = 625 / 1392
+
+
 holding_cards_top_left_x_cor_rel = 567 / 1280
 holding_cards_top_left_y_cor_rel = 69 / 911
 
