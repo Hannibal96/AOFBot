@@ -65,8 +65,73 @@ state_action_strategy = {
 }
 
 
+jp_state_action_strategy = {
+    State.CO: [
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 6],  # not suit
+        [1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 7],  # suit
+    ],
+
+    State.DE: [
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 8],  # not suit
+        [1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 4, 4],  # suit
+    ],
+    State.DE_CO: [
+        [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 4],  # not suit
+        [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 7],  # suit
+    ],
+
+    State.SB: [
+        [1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 5, 1],  # not suit
+        [1, 1, 1, 1, 1, 0, 0, 0, 0, 3, 3, 1, 1],  # suit
+    ],
+    State.SB_CO: [
+        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 5],  # not suit
+        [0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 8],  # suit
+    ],
+    State.SB_DE: [
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 6],  # not suit
+        [0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 8],  # suit
+    ],
+    State.SB_CO_DE: [
+        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2],  # not suit
+        [0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 2],  # suit
+    ],
+
+    State.BB_CO: [
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 8],  # not suit
+        [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 2, 6],  # suit
+    ],
+    State.BB_DE: [
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 8],  # not suit
+        [1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 4, 4],  # suit
+    ],
+    State.BB_SB: [
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 5, 3],  # not suit
+        [1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 2, 5, 1],  # suit
+    ],
+    State.BB_CO_DE: [
+        [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 2],  # not suit
+        [0, 0, 0, 3, 0, 0, 0, 0, 1, 0, 0, 1, 2],  # suit
+    ],
+    State.BB_CO_SB: [
+        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2],  # not suit
+        [0, 0, 1, 2, 0, 0, 0, 0, 1, 0, 1, 0, 6],  # suit
+    ],
+    State.BB_DE_SB: [
+        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2],  # not suit
+        [0, 0, 1, 2, 0, 0, 0, 1, 0, 0, 1, 0, 8],  # suit
+    ],
+    State.BB_CO_DE_SB: [
+        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2],  # not suit
+        [0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0],  # suit
+    ],
+
+}
+
+
+
 def decide_action(c1, c2, state):
-    vector = state_action_strategy[state][int(c1.suit == c2.suit)]
+    vector = jp_state_action_strategy[state][int(c1.suit == c2.suit)]
 
     max_rank = max(c1.number.value, c2.number.value)
     min_rank = min(c1.number.value, c2.number.value)

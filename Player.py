@@ -9,6 +9,7 @@ import time
 def run_table_iter(table, saver):
     if table.is_table_visible():
         table.fg_table()
+
         if table.find_button_location(save=saver):
             table.update_hand_counter()
 
@@ -20,6 +21,7 @@ def run_table_iter(table, saver):
 
             print(table)
             table.act()
+            #table.read_hud(save=True)
 
 
 def run_table(table, saver, lock):

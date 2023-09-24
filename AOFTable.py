@@ -1,3 +1,5 @@
+import time
+
 import matplotlib.pyplot as plt
 import win32gui
 import pyautogui
@@ -8,6 +10,7 @@ from Enums import *
 from CNN_utils import *
 from Card import Card
 from Strategy import  *
+import random
 
 
 class AOFTable:
@@ -366,6 +369,56 @@ class AOFTable:
                               size_x=int(self.x_size * action_x_size_rel), save=save)
 
         return classify_image(model=self.action_model, im=action, device=self.device, resize=action_resize)
+
+    def read_hud(self, save=False):
+        def read_hud_loc(loc):
+            name = "hud_"
+            if loc == Location.Left:
+                player_x_cor_rel = left_player_x_cor_rel
+                player_y_cor_rel = left_player_y_cor_rel
+                hud_x_cor_rel = hud_left_x_cor_rel
+                hud_y_cor_rel = hud_left_y_cor_rel
+                name += 'left'
+            elif loc == Location.Right:
+                player_x_cor_rel = right_player_x_cor_rel
+                player_y_cor_rel = right_player_y_cor_rel
+                hud_x_cor_rel = hud_right_x_cor_rel
+                hud_y_cor_rel = hud_right_y_cor_rel
+                name += 'right'
+            elif loc == Location.Top:
+                player_x_cor_rel = top_player_x_cor_rel
+                player_y_cor_rel = top_player_y_cor_rel
+                hud_x_cor_rel = hud_top_x_cor_rel
+                hud_y_cor_rel = hud_top_y_cor_rel
+                name += 'top'
+            else:
+                assert False
+
+            pyautogui.moveTo(self.cor_x_high + int(self.x_size * player_x_cor_rel),
+                             self.cor_y_high + int(self.y_size * player_y_cor_rel), duration=0.1)
+            # TODO: pyautogui.moveTo(500, 500, duration=1, tween=pyautogui.easeInOutQuad)
+            if loc == Location.Top:
+                time.sleep(0.5)
+            self.screen_shot()
+            if loc == Location.Top:
+                plt.imshow(self.curr_screen_shot)
+                plt.show()
+            hud = self.zoom_in(name=name,
+                               cor_x=int(self.x_size * hud_x_cor_rel),
+                               cor_y=int(self.y_size * hud_y_cor_rel),
+                               size_y=int(self.y_size * hud_y_size_rel),
+                               size_x=int(self.x_size * hud_x_size_rel), save=save)
+            time.sleep(0.1)
+
+        locations = [Location.Top, Location.Left, Location.Right]
+        time.sleep(0.1)
+        for loc in locations:
+            read_hud_loc(loc=loc)
+
+        pyautogui.moveTo(self.cor_x_high + int(self.x_size * 0.5),
+                         self.cor_y_high + int(self.y_size * 0.5), duration=0.1)
+
+
 
     def read_holding_cards(self, save=False):
         left_card = self.zoom_in(name='bottom_left_card',

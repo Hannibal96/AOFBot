@@ -53,6 +53,18 @@ hud_left_y_cor_rel = 625 / 1392
 hud_right_x_cor_rel = 950 / 1979
 hud_right_y_cor_rel = 625 / 1392
 
+hud_x_size_rel = 735 / 1979
+hud_y_size_rel = 265 / 1392
+
+top_player_x_cor_rel = 990 / 1979
+top_player_y_cor_rel = 175 / 1392
+
+left_player_x_cor_rel = 125 / 1979
+left_player_y_cor_rel = 600 / 1392
+
+right_player_x_cor_rel = 1800 / 1979
+right_player_y_cor_rel = 590 / 1392
+
 
 holding_cards_top_left_x_cor_rel = 567 / 1280
 holding_cards_top_left_y_cor_rel = 69 / 911
