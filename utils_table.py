@@ -1,3 +1,6 @@
+import pyautogui
+
+
 def squeeze_name(name):
     _, color, number, _, sb, _, bb = name.split()
     return color + "_" + number
@@ -5,6 +8,12 @@ def squeeze_name(name):
 
 TOTAL_SUM_OF_LOCATIONS = 6
 TOTAL_SUM_OF_POSITIONS = 6
+
+"""
+        **********************
+        *****   Button   *****
+        **********************
+"""
 
 button_top_x_cor_rel = 570 / 1280
 button_top_y_cor_rel = 230 / 911
@@ -21,6 +30,11 @@ button_bottom_y_cor_rel = 610 / 911
 button_x_size_rel = 60 / 1280
 button_y_size_rel = 60 / 911
 
+"""
+        **********************
+        *****   Blinds   *****
+        **********************
+"""
 
 blinds_top_x_cor_rel = 610 / 1280
 blinds_top_y_cor_rel = 250 / 911
@@ -37,12 +51,37 @@ blinds_bottom_y_cor_rel = 573 / 911
 blinds_x_size_rel = 70 / 1280
 blinds_y_size_rel = 70 / 911
 
+"""
+        **********************
+        *****   Action   *****
+        **********************
+"""
+
 action_x_cor_rel = 840 / 1280
 action_y_cor_rel = 790 / 911
 
 action_x_size_rel = 425 / 1280
 action_y_size_rel = 110 / 911
 
+"""
+        *********************************
+        *****   Actions Location   ******
+        *********************************
+"""
+
+act_allin_x_rel = 1165 / 1280
+act_allin_y_rel = 815 / 911
+
+act_fold_x_rel = 940 / 1280
+act_fold_y_rel = 815 / 911
+
+
+
+"""
+        ********************
+        *****   HUD   ******
+        ********************
+"""
 
 hud_top_x_cor_rel = 170 / 1979
 hud_top_y_cor_rel = 265 / 1392
@@ -56,6 +95,12 @@ hud_right_y_cor_rel = 625 / 1392
 hud_x_size_rel = 735 / 1979
 hud_y_size_rel = 265 / 1392
 
+"""
+        ********************************
+        *****   HUD-place mouse   ******
+        ********************************
+"""
+
 top_player_x_cor_rel = 990 / 1979
 top_player_y_cor_rel = 175 / 1392
 
@@ -65,6 +110,30 @@ left_player_y_cor_rel = 600 / 1392
 right_player_x_cor_rel = 1800 / 1979
 right_player_y_cor_rel = 590 / 1392
 
+
+"""
+        **********************
+        *****   Names   ******
+        **********************
+"""
+
+left_name_x_cor_rel = 20 / 1280
+left_name_y_cor_rel = 437 / 911
+
+right_name_x_cor_rel = 1100 / 1280
+right_name_y_cor_rel = 437 / 911
+
+top_name_x_cor_rel = 560 / 1280
+top_name_y_cor_rel = 175 / 911
+
+name_x_size_rel = 160 / 1280
+name_y_size_rel = 35 / 911
+
+"""
+        **********************
+        *****   Cards   ******
+        **********************
+"""
 
 holding_cards_top_left_x_cor_rel = 567 / 1280
 holding_cards_top_left_y_cor_rel = 69 / 911
@@ -109,11 +178,4 @@ community_cards_5_y_cor_rel = 372 / 911
 
 card_x_size_rel = 35 / 1280
 card_y_size_rel = 85 / 911
-
-
-act_allin_x_rel = 1165 / 1280
-act_allin_y_rel = 815 / 911
-
-act_fold_x_rel = 940 / 1280
-act_fold_y_rel = 815 / 911
 

@@ -1,10 +1,6 @@
-import cv2
-
-from CNN_data import get_data_loader
 from CNN_utils import *
 import torch
 import torch.nn as nn
-from CNN_mdel import CnnClassifier, get_model
 import argparse
 
 

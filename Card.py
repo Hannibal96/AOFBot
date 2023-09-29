@@ -20,6 +20,7 @@ class Card:
 
     def __str__(self):
         suits_symbols = [Color.RED+'♥'+Color.END, Color.YELLOW+'♦'+Color.END, Color.PURPLE+'♠'+Color.END, Color.GREEN+'♣'+Color.END]
+        #  suits_symbols = ['♥', '♦', '♠', '♣']
         numbers_symbols = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
         return '|'+numbers_symbols[self.number.value-2]+suits_symbols[self.suit.value]+'|'
 

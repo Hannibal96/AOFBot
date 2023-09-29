@@ -1,16 +1,13 @@
 import time
-
-import matplotlib.pyplot as plt
 import win32gui
-import pyautogui
-import os
 import cv2
 from utils_table import *
-from Enums import *
 from CNN_utils import *
 from Card import Card
-from Strategy import  *
-import random
+from Strategy import *
+import pytesseract
+from logger import custom_print
+print = custom_print
 
 
 class AOFTable:
@@ -31,8 +28,10 @@ class AOFTable:
         self.curr_all_ins = []
 
         self.curr_location_position_mapping = {}
+        self.curr_location_name_mapping = {}
         for location in Location:
             self.curr_location_position_mapping[location] = Position.SittingOut
+            self.curr_location_name_mapping[location] = None
 
         self.left_card = None
         self.right_card = None
@@ -223,32 +222,20 @@ class AOFTable:
 
     def figure_table_structure(self):
 
-        """print("*" * 10)
-        print("*" * 10)
-        print("*" * 10)
-        print(f"DE: {self.curr_dealer_location.value}")
-        print(f"SB: {self.curr_sb_location.value if self.curr_sb_location is not None else self.curr_sb_location}")
-        print(f"BB: {self.curr_bb_location.value}")
-        print(f"{self.curr_all_ins}")
-        print("*" * 10)
-        print("*" * 10)
-        print("*" * 10)"""
-
         wrong_flag = False
+        self.valid = not wrong_flag
 
         self.curr_location_position_mapping[self.curr_dealer_location] = Position.Dealer
         self.curr_location_position_mapping[self.curr_bb_location] = Position.BigBlind
 
         if (self.curr_dealer_location.value == (self.curr_bb_location.value - 2) % 4) and ((self.curr_sb_location is None and Location((self.curr_bb_location.value - 1) % 4) in self.curr_all_ins) or (
                 self.curr_sb_location is not None and self.curr_sb_location.value == (self.curr_bb_location.value - 1) % 4)):
-            #print(" 4 Players case")
             self.curr_location_position_mapping[Location((self.curr_bb_location.value - 1) % 4)] = Position.SmallBlind
             self.curr_location_position_mapping[Location((self.curr_bb_location.value - 3) % 4)] = Position.CutOff
 
         # one sitting out in the middle, not cutoff
         elif self.curr_dealer_location.value == (self.curr_bb_location.value - 3) % 4 and (
                 (self.curr_sb_location is not None and self.curr_sb_location != self.curr_dealer_location) or any(ai_loc != self.curr_dealer_location for ai_loc in self.curr_all_ins)):
-            #print(" 3 Players case")
             if self.curr_sb_location is None:
                 if Location((self.curr_bb_location.value - 1) % 4) in self.curr_all_ins:
                     self.curr_location_position_mapping[Location((self.curr_bb_location.value - 1) % 4)] = Position.SmallBlind
@@ -270,14 +257,12 @@ class AOFTable:
         # two players sitting out
 
         elif self.curr_sb_location is not None and self.curr_sb_location == self.curr_dealer_location:
-            #print(" 2 Players case I")
             for location in Location:
                 if location not in [self.curr_bb_location, self.curr_dealer_location]:
                     self.curr_location_position_mapping[location] = Position.SittingOut
             self.curr_location_position_mapping[self.curr_dealer_location] = Position.SmallBlind
 
         elif self.curr_sb_location is None and self.curr_dealer_location in self.curr_all_ins:
-            #print(" 2 Players case II")
             for location in Location:
                 if location not in [self.curr_bb_location, self.curr_dealer_location]:
                     if location in self.curr_all_ins:
@@ -289,8 +274,8 @@ class AOFTable:
         self.valid = not wrong_flag
         if not self.valid:
             if self.crusher:
-                assert False, "-I- Impossible table structure"
-            print("-I- Incompatible table structure")
+                assert False, "-E- Impossible table structure"
+            print(f"-I- {self.name} Incompatible table structure")
             self.curr_location_position_mapping[Location.Bottom] = Position.SittingOut
             self.curr_location_position_mapping[Location.Left] = Position.SittingOut
             self.curr_location_position_mapping[Location.Right] = Position.SittingOut
@@ -306,24 +291,34 @@ class AOFTable:
                 fake_state = State.SB_CO
             else:
                 fake_state = State.CO
-            print(f"-I- Incompatible table structure, Guessing {fake_state}")
+            print(f"-E- {self.name} Incompatible table structure, Guessing {fake_state}")
             self.valid = True
             return fake_state
 
         if self.curr_location_position_mapping[Location.Bottom] == Position.CutOff:
-            assert len(self.curr_all_ins) == 0
+            if not len(self.curr_all_ins) == 0:
+                print(f"-E- {self.name} position CO, with allin")
+                self.valid = False
             return State.CO
 
         if self.curr_location_position_mapping[Location.Bottom] == Position.Dealer:
-            assert len(self.curr_all_ins) <= 1
+            if not len(self.curr_all_ins) <= 1:
+                print(f"-E- {self.name} position DE more than 1 allin")
+                self.valid = False
+                return State.DE_CO
             if len(self.curr_all_ins) == 1:
-                assert self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.CutOff
+                if not self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.CutOff:
+                    print(f"-E- {self.name} position DE one all in not in CO")
+                    self.valid = False
                 return State.DE_CO
             else:
                 return State.DE
 
         if self.curr_location_position_mapping[Location.Bottom] == Position.SmallBlind:
-            assert len(self.curr_all_ins) <= 2
+            if not len(self.curr_all_ins) <= 2:
+                print(f"-E- {self.name} position SB more than 2 allin")
+                self.valid = False
+                return State.SB_CO_DE
             if len(self.curr_all_ins) == 0:
                 return State.SB
             if len(self.curr_all_ins) == 1:
@@ -331,13 +326,21 @@ class AOFTable:
                     return State.SB_CO
                 if self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.Dealer:
                     return State.SB_DE
+                print(f"-E- {self.name} position SB 1 allin not in CO or DE")
+                self.valid = False
+                return State.SB_DE
             if len(self.curr_all_ins) == 2:
-                assert self.curr_location_position_mapping[self.curr_all_ins[0]] in [Position.CutOff, Position.Dealer]
-                assert self.curr_location_position_mapping[self.curr_all_ins[1]] in [Position.CutOff, Position.Dealer]
+                if not (self.curr_location_position_mapping[self.curr_all_ins[0]] in [Position.CutOff, Position.Dealer]
+                        and self.curr_location_position_mapping[self.curr_all_ins[1]] in [Position.CutOff, Position.Dealer]):
+                    print(f"-E- {self.name} position SB 2 allin, not in CO and DE")
+                    self.valid = False
                 return State.SB_CO_DE
 
         if self.curr_location_position_mapping[Location.Bottom] == Position.BigBlind:
-            assert len(self.curr_all_ins) >= 1
+            if not len(self.curr_all_ins) >= 1:
+                print(f"-E- {self.name} position BB no allin")
+                self.valid = False
+                return State.BB_CO
             if len(self.curr_all_ins) == 1:
                 if self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.CutOff:
                     return State.BB_CO
@@ -345,7 +348,13 @@ class AOFTable:
                     return State.BB_DE
                 if self.curr_location_position_mapping[self.curr_all_ins[0]] == Position.SmallBlind:
                     return State.BB_SB
+                print(f"-E- {self.name} position BB 1 allin not in CO or DE or SB")
+                self.valid = False
+                return State.BB_CO
             if len(self.curr_all_ins) == 3:
+                if not (Location.Top in self.curr_all_ins and Location.Left in self.curr_all_ins and Location.Right in self.curr_all_ins):
+                    print(f"-E- {self.name} position BB 3 allin not in all the Locations")
+                    self.valid = False
                 return State.BB_CO_DE_SB
             if len(self.curr_all_ins) == 2:
                 if Position.CutOff not in [self.curr_location_position_mapping[self.curr_all_ins[0]], self.curr_location_position_mapping[self.curr_all_ins[1]]]:
@@ -354,9 +363,13 @@ class AOFTable:
                     return State.BB_CO_SB
                 if Position.SmallBlind not in [self.curr_location_position_mapping[self.curr_all_ins[0]], self.curr_location_position_mapping[self.curr_all_ins[1]]]:
                     return State.BB_CO_DE
-            assert False
-
-        assert False
+                print(f"-E- {self.name} position BB 2 allin don't fit DE_SB or CO_SB or CD_DE")
+                self.valid = False
+                return State.BB_CO_DE
+            print(f"-E- {self.name} position BB not {1,2,3} allin")
+            self.valid = False
+        print(f"-E- {self.name} position not BB or SB or DE or CO")
+        self.valid = False
 
     def figure_state(self):
         self.curr_state = self._figure_state()
@@ -418,8 +431,6 @@ class AOFTable:
         pyautogui.moveTo(self.cor_x_high + int(self.x_size * 0.5),
                          self.cor_y_high + int(self.y_size * 0.5), duration=0.1)
 
-
-
     def read_holding_cards(self, save=False):
         left_card = self.zoom_in(name='bottom_left_card',
                                  cor_x=int(self.x_size * holding_cards_bottom_left_x_cor_rel),
@@ -446,19 +457,59 @@ class AOFTable:
         self.left_card = Card(number=left_value, suit=left_suit)
         self.right_card = Card(number=right_value, suit=right_suit)
 
+    def _read_name_aux(self, im):
+        vote = {}
+        while True:
+            rand_im = im[:, ]
+            name = pytesseract.image_to_string(rand_im)
+            if name in vote:
+                vote[name] = 1
+            else:
+                vote[name] += 1
+            if max(vote) < 3:
+                break
+        return max(vote, key=vote.get)
+
+    def read_names(self, save=False):
+        left_name = self.zoom_in(name='left_name',
+                                 cor_x=int(self.x_size * left_name_x_cor_rel),
+                                 cor_y=int(self.y_size * left_name_y_cor_rel),
+                                 size_y=int(self.y_size * name_y_size_rel),
+                                 size_x=int(self.x_size * name_x_size_rel), save=save)
+
+        right_name = self.zoom_in(name='right_name',
+                                 cor_x=int(self.x_size * right_name_x_cor_rel),
+                                 cor_y=int(self.y_size * right_name_y_cor_rel),
+                                 size_y=int(self.y_size * name_y_size_rel),
+                                 size_x=int(self.x_size * name_x_size_rel), save=save)
+
+        top_name = self.zoom_in(name='top_name',
+                                  cor_x=int(self.x_size * top_name_x_cor_rel),
+                                  cor_y=int(self.y_size * top_name_y_cor_rel),
+                                  size_y=int(self.y_size * name_y_size_rel),
+                                  size_x=int(self.x_size * name_x_size_rel), save=save)
+
+        left_name = pytesseract.image_to_string(left_name)
+        top_name = pytesseract.image_to_string(top_name)
+        right_name = pytesseract.image_to_string(right_name)
+
+        self.curr_location_name_mapping[Location.Left] = left_name.split("\n")[0]
+        self.curr_location_name_mapping[Location.Top] = top_name.split("\n")[0]
+        self.curr_location_name_mapping[Location.Right] = right_name.split("\n")[0]
+
     def _all_in(self):
         x = int(self.cor_x_high + self.x_size * act_allin_x_rel + np.random.randn() * 15 * self.x_size / 1280)
         y = int(self.cor_y_high + self.y_size * act_allin_y_rel + np.random.randn() * 5 * self.y_size / 911)
         print(f"-I- Allin: {x, y}")
         pyautogui.moveTo(x, y, duration=0.1 + np.random.randn() * 0.01)
-        pyautogui.click(x, y)
+        pyautogui.click(x, y, tween=pyautogui.easeInOutQuad)
 
     def _fold(self):
         x = int(self.cor_x_high + self.x_size * act_fold_x_rel + np.random.randn() * 15 * self.x_size / 1280)
         y = int(self.cor_y_high + self.y_size * act_fold_y_rel + np.random.randn() * 5 * self.y_size / 911)
         print(f"-I- Fold: {x, y}")
         pyautogui.moveTo(x, y, duration=0.1 + np.random.randn() * 0.01)
-        pyautogui.click(x, y)
+        pyautogui.click(x, y, tween=pyautogui.easeInOutQuad)
 
     def act(self):
         action = decide_action(c1=self.left_card, c2=self.right_card, state=self.curr_state)
@@ -534,9 +585,6 @@ class AOFTable:
     def __str__(self):
         table_str = "*"*10 + " " + self.name + " " + "*"*10 + "\n"
         table_str += "*" * 5 + " # Hand: " + str(self.hands_counter) + "\n"
-        #table_str += "*"*5 + " Dealer Location: " + str(self.curr_dealer_location) + "\n"
-        #table_str += "*" * 5 + " SB Location: " + str(self.curr_sb_location) + "\n"
-        #table_str += "*" * 5 + " BB Location: " + str(self.curr_bb_location) + "\n"
 
         top_in = int(Location.Top in self.curr_all_ins)
         left_in = int(Location.Left in self.curr_all_ins)
@@ -553,24 +601,41 @@ class AOFTable:
         right_bb = int(Location.Right == self.curr_bb_location)
         bottom_bb = int(Location.Bottom == self.curr_bb_location)
 
+        top_sb = int(Location.Top == self.curr_sb_location)
+        left_sb = int(Location.Left == self.curr_sb_location)
+        right_sb = int(Location.Right == self.curr_sb_location)
+        bottom_sb = int(Location.Bottom == self.curr_sb_location)
+
         dealer_str = Color.GREEN + 'o ' + Color.END
         bb_str = Color.YELLOW + 'bb ' + Color.END
         sb_str = Color.YELLOW + 'sb ' + Color.END
 
-        table_str += f"{' ' * 15}{top_in * (Color.BOLD+Color.UNDERLINE)}{self.curr_location_position_mapping[Location.Top]}{top_in * Color.END}\n"
-        table_str += f"{' ' * 15}{top_bb * bb_str}{top_dealer * dealer_str}\n"
-        table_str += f"{' ' * 5}{left_in * (Color.BOLD+Color.UNDERLINE)}{self.curr_location_position_mapping[Location.Left]}{left_in * Color.END}" \
-                     f" {left_bb * bb_str + left_dealer * dealer_str}" \
-                     f"{' ' * 20} " \
-                     f"{right_bb * bb_str + right_dealer * dealer_str + right_in * (Color.BOLD+Color.UNDERLINE)}" \
-                     f"{self.curr_location_position_mapping[Location.Right]}{right_in * Color.END}\n"
-        table_str += f"{' ' * 15}{bottom_bb * bb_str + bottom_dealer * dealer_str}\n"
-        table_str += f"{' ' * 15}{bottom_in * (Color.BOLD+Color.UNDERLINE)}{self.curr_location_position_mapping[Location.Bottom]}{bottom_in * Color.END} \n"
+        top_blinds_str = top_bb * bb_str + top_sb * sb_str
+        left_blinds_str = left_bb * bb_str + left_sb * sb_str
+        right_blinds_str = right_bb * bb_str + right_sb * sb_str
+        bottom_blinds_str = bottom_bb * bb_str + bottom_sb * sb_str
+
+        top_name_str = f"{top_in * (Color.BOLD+Color.UNDERLINE)}{self.curr_location_name_mapping[Location.Top]}-{self.curr_location_position_mapping[Location.Top]}{top_in * Color.END}"
+        left_name_str = f"{left_in * (Color.BOLD + Color.UNDERLINE)}{self.curr_location_name_mapping[Location.Left]}-{self.curr_location_position_mapping[Location.Left]}{left_in * Color.END} "
+        right_name_str = f"{right_in * (Color.BOLD+Color.UNDERLINE)}{self.curr_location_name_mapping[Location.Right]}-{self.curr_location_position_mapping[Location.Right]}{right_in * Color.END}"
+        bottom_name_str = f"{bottom_in * (Color.BOLD+Color.UNDERLINE)}{self.curr_location_position_mapping[Location.Bottom]}{bottom_in * Color.END}"
+
+        left_name_len = len(self.curr_location_name_mapping[Location.Left])
+        top_spaces = 15 + left_name_len
+        left_spaces = 5
+        right_spaces = 5 + left_name_len
+        bottom_spaces = 17 + left_name_len
+
+        table_str += f"{' ' * top_spaces}{top_name_str}\n"
+        table_str += f"{' ' * (top_spaces+3)}{top_blinds_str}{top_dealer * dealer_str}\n"
+        table_str += f"{' ' * left_spaces}{left_name_str} {left_blinds_str + left_dealer * dealer_str} {' ' * 20} {right_blinds_str + right_dealer * dealer_str} {right_name_str}\n"
+        table_str += f"{' ' * bottom_spaces}{bottom_blinds_str + bottom_dealer * dealer_str}\n"
+        table_str += f"{' ' * bottom_spaces} {bottom_name_str} \n"
 
         table_str += f"{self.left_card} {self.right_card} \n"
 
-        #table_str += f"{self.curr_all_ins}"
-        table_str += f"{self.curr_state}"
+        table_str += f"{self.curr_state} \n"
+        table_str += f"{self.curr_all_ins} "
 
         return table_str
 
