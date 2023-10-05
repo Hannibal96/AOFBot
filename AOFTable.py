@@ -275,7 +275,7 @@ class AOFTable:
         if not self.valid:
             if self.crusher:
                 assert False, "-E- Impossible table structure"
-            print(f"-I- {self.name} Incompatible table structure")
+            print(f"-E- {self.name} Incompatible table structure")
             self.curr_location_position_mapping[Location.Bottom] = Position.SittingOut
             self.curr_location_position_mapping[Location.Left] = Position.SittingOut
             self.curr_location_position_mapping[Location.Right] = Position.SittingOut
@@ -368,8 +368,10 @@ class AOFTable:
                 return State.BB_CO_DE
             print(f"-E- {self.name} position BB not {1,2,3} allin")
             self.valid = False
+            return State.BB_CO
         print(f"-E- {self.name} position not BB or SB or DE or CO")
         self.valid = False
+        return State.CO
 
     def figure_state(self):
         self.curr_state = self._figure_state()
