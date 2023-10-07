@@ -514,7 +514,7 @@ class AOFTable:
         pyautogui.click(x, y, tween=pyautogui.easeInOutQuad)
 
     def act(self):
-        action = decide_action(c1=self.left_card, c2=self.right_card, state=self.curr_state)
+        action = decide_action(c1=self.left_card, c2=self.right_card, state=self.curr_state, all_in=2.0, bb=0.25, sb=0.1, jp=130)
         if action == Action.AllIn:
             self._all_in()
         else:
