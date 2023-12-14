@@ -5,13 +5,14 @@ from utils_table import *
 from CNN_utils import *
 from Card import Card
 from Strategy import *
-import pytesseract
 from logger import custom_print
+from tesseract import optimized_read
+import optuna
 print = custom_print
 
 
 class AOFTable:
-    def __init__(self, name, hwnd, dealer_model, blinds_model, action_model, value_model, suit_model, device, crusher):
+    def __init__(self, name, hwnd, dealer_model, blinds_model, action_model, value_model, suit_model, tess_models, device, crusher):
         self.name = name
         self.short_name = squeeze_name(name)
         self.hwnd = hwnd
@@ -43,11 +44,17 @@ class AOFTable:
 
         self.hands_counter = 0
 
+        # FIXME: use as a static variables
         self.dealer_model = dealer_model
         self.blinds_model = blinds_model
         self.action_model = action_model
         self.value_model = value_model
         self.suit_model = suit_model
+
+        optuna_name = f"tess_opt_{tess_models}"
+        self.opt_study = optuna.create_study(study_name=f'{optuna_name}',
+                                             storage=f'sqlite:///./Optuna/{optuna_name}.db ',
+                                             direction='maximize', load_if_exists=True)
 
         self.device = device
 
@@ -64,7 +71,6 @@ class AOFTable:
         return win32gui.IsWindowVisible(self.hwnd)
 
     def zoom_in(self, name, cor_x, size_x, cor_y, size_y, save=False):
-
         im = self.curr_screen_shot[cor_y:cor_y + size_y, cor_x:cor_x + size_x]
         if save:
             path = "./pictures/Running/" + self.short_name + "_" + name + "_" + str(self.hands_counter) + ".png"
@@ -459,19 +465,6 @@ class AOFTable:
         self.left_card = Card(number=left_value, suit=left_suit)
         self.right_card = Card(number=right_value, suit=right_suit)
 
-    def _read_name_aux(self, im):
-        vote = {}
-        while True:
-            rand_im = im[:, ]
-            name = pytesseract.image_to_string(rand_im)
-            if name in vote:
-                vote[name] = 1
-            else:
-                vote[name] += 1
-            if max(vote) < 3:
-                break
-        return max(vote, key=vote.get)
-
     def read_names(self, save=False):
         left_name = self.zoom_in(name='left_name',
                                  cor_x=int(self.x_size * left_name_x_cor_rel),
@@ -491,9 +484,9 @@ class AOFTable:
                                   size_y=int(self.y_size * name_y_size_rel),
                                   size_x=int(self.x_size * name_x_size_rel), save=save)
 
-        left_name = pytesseract.image_to_string(left_name)
-        top_name = pytesseract.image_to_string(top_name)
-        right_name = pytesseract.image_to_string(right_name)
+        left_name = optimized_read(im=left_name, num=1, study=self.opt_study)
+        top_name = optimized_read(im=top_name, num=1, study=self.opt_study)
+        right_name = optimized_read(im=right_name, num=1, study=self.opt_study)
 
         self.curr_location_name_mapping[Location.Left] = left_name.split("\n")[0]
         self.curr_location_name_mapping[Location.Top] = top_name.split("\n")[0]

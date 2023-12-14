@@ -14,12 +14,12 @@ def find_running_tables_window():
     return aof_tables_list
 
 
-def set_running_tables(tables_list, dealer_model, blinds_model, action_model, value_model, suit_model, device, crusher):
+def set_running_tables(tables_list, dealer_model, blinds_model, action_model, value_model, suit_model, device, tess_models, crusher):
     running_tables_list = []
     for table in tables_list:
         new_table = AOFTable(name=win32gui.GetWindowText(table), hwnd=table, device=device,
                              dealer_model=dealer_model, blinds_model=blinds_model, action_model=action_model,
-                             value_model=value_model, suit_model=suit_model, crusher=crusher)
+                             value_model=value_model, suit_model=suit_model, crusher=crusher, tess_models=tess_models)
         running_tables_list.append(new_table)
     return running_tables_list
 

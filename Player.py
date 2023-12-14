@@ -10,6 +10,7 @@ if __name__ == "__main__":
     MP = True
     saver = True
     crusher = False
+    tess_models = 1
 
     print('Device:', device)
 
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     aof_tables_list = find_running_tables_window()
     running_tables = set_running_tables(tables_list=aof_tables_list,
                                         dealer_model=dealer_model, blinds_model=blinds_model, action_model=action_model, value_model=value_model, suit_model=suit_model,
-                                        device=device, crusher=crusher)
+                                        device=device, crusher=crusher, tess_models=tess_models)
     if MP:
         #torch.multiprocessing.set_start_method('spawn')
         lock = Lock()

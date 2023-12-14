@@ -76,7 +76,6 @@ act_fold_x_rel = 940 / 1280
 act_fold_y_rel = 815 / 911
 
 
-
 """
         ********************
         *****   HUD   ******
@@ -118,13 +117,13 @@ right_player_y_cor_rel = 590 / 1392
 """
 
 left_name_x_cor_rel = 20 / 1280
-left_name_y_cor_rel = 437 / 911
+left_name_y_cor_rel = 440 / 911
 
 right_name_x_cor_rel = 1100 / 1280
-right_name_y_cor_rel = 437 / 911
+right_name_y_cor_rel = 440 / 911
 
 top_name_x_cor_rel = 560 / 1280
-top_name_y_cor_rel = 175 / 911
+top_name_y_cor_rel = 180 / 911
 
 name_x_size_rel = 160 / 1280
 name_y_size_rel = 35 / 911
