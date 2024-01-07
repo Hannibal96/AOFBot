@@ -43,6 +43,7 @@ class AOFTable:
         self.crusher = crusher
 
         self.hands_counter = 0
+        self.innner_counter = 0
 
         # FIXME: use as a static variables
         self.dealer_model = dealer_model
@@ -80,11 +81,15 @@ class AOFTable:
 
     def update_hand_counter(self):
         self.hands_counter += 1
+        self.innner_counter = 0
 
     def screen_shot(self):
         self.fg_table()
-        raw_screenshot_str = "./pictures/Running/" + self.short_name + "_" + str(self.hands_counter) + "_raw.png"
-        clear_screenshot_str = "./pictures/Running/" + self.short_name + "_" + str(self.hands_counter) + ".png"
+        #raw_screenshot_str = "./pictures/Running/" + self.short_name + "_" + str(self.hands_counter) + "_raw.png"
+        raw_screenshot_str = f"./pictures/Running/{self.short_name}_{self.hands_counter}_raw.png"
+        #clear_screenshot_str = "./pictures/Running/" + self.short_name + "_" + str(self.hands_counter) + ".png"
+        clear_screenshot_str = f"./pictures/Running/{self.short_name}_{self.hands_counter}_{self.innner_counter}.png"
+        self.innner_counter += 1
         pyautogui.screenshot(raw_screenshot_str)
         im = cv2.imread(raw_screenshot_str, 0)
         im = im[self.cor_y_high:self.cor_y_low, self.cor_x_high:self.cor_x_low]
