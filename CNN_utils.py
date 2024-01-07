@@ -179,7 +179,7 @@ def hpo(data_dir, resize, criterion, device, epochs=100, path=None):
 
                 if (last_eval_acc > best_acc_eval) or (last_eval_acc == best_acc_eval and last_train_acc > best_acc_train):
                     print(f"-I- Saved {task} with {model_str}")
-                    torch.save(model, "./trained_" + task + "_model.torch")
+                    torch.save(model, "./trained_" + task + f"_model_{round(last_eval_acc, 1)}.torch")
                     best_acc_eval = last_eval_acc
                     best_acc_train = last_train_acc
 

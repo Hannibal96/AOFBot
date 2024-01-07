@@ -44,7 +44,7 @@ def extract_order(file_name):
     return int(res)
 
 
-def find_dealer_location(im, save=False):
+def find_dealer_location(im):
     y_size, x_size, dim = im.shape
 
     top_x = round(button_top_x_cor_rel * x_size)

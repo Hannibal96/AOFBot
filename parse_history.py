@@ -38,221 +38,6 @@ class HistoryDataBase:
             self.data = pickle.load(f)
 
 
-def find_init_final_photos():
-    init_photo = None
-    final_photo = None
-    return init_photo, final_photo
-
-
-def parse_location_position(init_photo, dealer_location, allin=2.0, sb=0.1, bb=0.25):
-    location_position_map = {}
-    location_action_map = {}
-
-    y_size, x_size, dim = im.shape
-
-    top_x = round(blinds_top_x_cor_rel * x_size)
-    top_y = round(blinds_top_y_cor_rel * y_size)
-
-    right_x = round(blinds_right_x_cor_rel * x_size)
-    right_y = round(blinds_right_y_cor_rel * y_size)
-
-    left_x = round(blinds_left_x_cor_rel * x_size)
-    left_y = round(blinds_left_y_cor_rel * y_size)
-
-    bottom_x = round(blinds_bottom_x_cor_rel * x_size)
-    bottom_y = round(blinds_bottom_y_cor_rel * y_size)
-
-    x_size = round(blinds_x_size_rel * x_size)
-    y_size = round(blinds_y_size_rel * y_size)
-
-    top = init_photo[top_y:top_y + y_size, top_x:top_x + x_size]
-    left = init_photo[left_y:left_y + y_size, left_x:left_x + x_size]
-    right = init_photo[right_y:right_y + y_size, right_x:right_x + x_size]
-    bottom = init_photo[bottom_y:bottom_y + y_size, bottom_x:bottom_x + x_size]
-
-    # nn_dir = "./NN/1.001"
-    # device = "cpu"
-    # blinds_model = torch.load(f"{nn_dir}/trained_Blinds_model.torch").to(device)
-    # top = classify_image(model=blinds_model, im=top, resize=blinds_resize, device=device)
-    # left = classify_image(model=blinds_model, im=left, resize=blinds_resize, device=device)
-    # right = classify_image(model=blinds_model, im=right, resize=blinds_resize, device=device)
-    # bottom = classify_image(model=blinds_model, im=bottom, resize=blinds_resize, device=device)
-
-    def extract_position(im):
-        txt = pytesseract.image_to_string(im[25:, :], config="-c tessedit_char_whitelist=012345678.$9 user_patterns_suffix ./blind_tesseract.txt")
-        try:
-            money = float(txt.split("$")[1].split("\n")[0])
-        except IndexError:
-            money = 0
-
-        if money == 0:
-            return None
-        if money == 0.25:
-            return Position.BigBlind
-        if money == 0.1:
-            return Position.SmallBlind
-        if money >= 2.0:
-            return Action.AllIn
-
-    location_action_map[Location.Right] = extract_position(im=right)
-    location_action_map[Location.Left] = extract_position(im=left)
-    location_action_map[Location.Top] = extract_position(im=top)
-    location_action_map[Location.Bottom] = extract_position(im=bottom)
-
-    none_counter = 0
-    for loc in [Location.Right, Location.Left, Location.Top, Location.Bottom]:
-        if loc is None:
-            none_counter += 1
-
-    if none_counter > 2:
-        return location_position_map
-
-    temp = {Location.Right: Location.Right,
-            Location.Left: Location.Left,
-            Location.Top: Location.Top,
-            Location.Bottom: Location.Bottom}
-
-    location_position_map[dealer_location] = Position.Dealer
-    if temp[Location((dealer_location.value + 1) % 4)] is None:
-        location_position_map[Location((dealer_location.value + 1) % 4)] = Position.SittingOut
-        if temp[Location((dealer_location.value + 2) % 4)] is None:
-            location_position_map[Location((dealer_location.value + 2) % 4)] = Position.SittingOut
-            location_position_map[Location((dealer_location.value + 3) % 4)] = Position.SmallBlind
-            location_position_map[dealer_location] = Position.BigBlind
-        else:
-            location_position_map[Location((dealer_location.value + 2) % 4)] = Position.SmallBlind
-            if temp[Location((dealer_location.value + 3) % 4)] is None:
-                location_position_map[Location((dealer_location.value + 3) % 4)] = Position.SittingOut
-                location_position_map[dealer_location] = Position.BigBlind
-            else:
-                location_position_map[Location((dealer_location.value + 3) % 4)] = Position.BigBlind
-    else:
-        location_position_map[Location((dealer_location.value + 1) % 4)] = Position.SmallBlind
-        if temp[Location((dealer_location.value + 2) % 4)] is None:
-            location_position_map[Location((dealer_location.value + 2) % 4)] = Position.SittingOut
-            if temp[Location((dealer_location.value + 3) % 4)] is None:
-                location_position_map[Location((dealer_location.value + 3) % 4)] = Position.SittingOut
-            else:
-                location_position_map[Location((dealer_location.value + 3) % 4)] = Position.BigBlind
-        else:
-            location_position_map[Location((dealer_location.value + 2) % 4)] = Position.BigBlind
-            location_position_map[Location((dealer_location.value + 3) % 4)] = Position.CutOff
-
-    return location_position_map, location_action_map
-
-
-def find_history(location_position_map, location_action_map):
-
-    position_action = {Position.BigBlind: None, Position.SmallBlind: None, Position.CutOff: None, Position.Dealer: None}
-    c = 0
-    for loc in Location:
-        if location_position_map[loc] is not None:
-            c += 1
-            position_action[location_position_map[loc]] = location_action_map[loc]
-
-    if c == 0:
-        return None
-
-    if position_action[Position.CutOff] == Action.AllIn:
-        if position_action[Position.Dealer] == Action.AllIn:
-            if position_action[Position.SmallBlind] == Action.AllIn:
-                if position_action[Position.BigBlind] == Action.AllIn:
-                    return History.CO_DE_SB_BB
-                else:
-                    return History.CO_DE_SB
-            else:
-                if position_action[Position.BigBlind] == Action.AllIn:
-                    return History.CO_DE_BB
-                else:
-                    return History.CO_DE
-        else:
-            if position_action[Position.SmallBlind] == Action.AllIn:
-                if position_action[Position.BigBlind] == Action.AllIn:
-                    return History.CO_SB_BB
-                else:
-                    return History.CO_SB
-            else:
-                if position_action[Position.BigBlind] == Action.AllIn:
-                    return History.CO_BB
-                else:
-                    return History.CO
-    else:
-        if position_action[Position.Dealer] == Action.AllIn:
-            if position_action[Position.SmallBlind] == Action.AllIn:
-                if position_action[Position.BigBlind] == Action.AllIn:
-                    return History.DE_SB_BB
-                else:
-                    return History.DE_SB
-            else:
-                if position_action[Position.BigBlind] == Action.AllIn:
-                    return History.DE_BB
-                else:
-                    return History.DE
-        else:
-            if position_action[Position.SmallBlind] == Action.AllIn:
-                if position_action[Position.BigBlind] == Action.AllIn:
-                    return History.SB_BB
-                else:
-                    return History.SB
-            else:
-                return History.BB
-
-
-def parse_total_pot(final_photo, sb, bb, allin):
-    y_size, x_size, dim = final_photo.shape
-    x_cor = round(x_size * pot_top_x_cor_rel)
-    y_cor = round(y_size * pot_top_y_cor_rel)
-    x_size = round(x_size * pot_x_size_rel)
-    y_size = round(y_size * pot_y_size_rel)
-
-    pot_photo = final_photo[y_cor:y_cor+y_size, x_cor:x_cor+x_size]
-    #txt = pytesseract.image_to_string(pot_photo, config="--psm 7 -c tessedit_char_whitelist=toalp:0123456789. user_patterns_suffix ./pot_tesseract.txt")
-    txt = pytesseract.image_to_string(pot_photo, config="--psm 7 user_patterns_suffix ./pot_tesseract.txt")
-
-    try:
-        total_pot = txt.split('$')[1].split("\n")[0]
-        total_pot = float(total_pot)
-    except:
-        total_pot = 10
-
-    if total_pot == 2 * bb + sb:
-        return [History.CO, History.DE]
-
-    if total_pot == 2 * bb:
-        return [History.SB]
-
-    if total_pot == 2 * sb:
-        return [History.BB]
-
-    if total_pot == 2 * allin + bb + sb:
-        return [History.CO_DE]
-
-    if total_pot == 2 * allin + bb:
-        return [History.CO_SB, History.DE_SB]
-
-    if total_pot == 2 * allin + sb:
-        return [History.CO_BB, History.DE_BB]
-
-    if total_pot == 2 * allin:
-        return [History.SB_BB]
-
-    if total_pot == 3 * allin + bb:
-        return [History.CO_DE_SB]
-
-    if total_pot == 3 * allin + sb:
-        return [History.CO_DE_BB]
-
-    if total_pot == 3 * allin:
-        return [History.CO_SB_BB, History.DE_SB_BB]
-
-    if total_pot == 4 * allin:
-        return [History.CO_DE_SB_BB]
-
-    # FIXME: finish for cases of additional blinds and allin that is greater than the normal
-    else:
-        return total_pot
-
-
 def update_database(database: HistoryDataBase, history: History, co_name: str, de_name: str, sb_name: str, bb_name: str):
 
     if history == History.BB:
@@ -346,6 +131,213 @@ def update_database(database: HistoryDataBase, history: History, co_name: str, d
 
     else:
         assert False, "Unknown history: {}".format(history)
+
+
+def parse_location_position(init_photo, dealer_location, allin=2.0, sb=0.1, bb=0.25):
+    location_position_map = {}
+    location_action_map = {}
+
+    y_size, x_size, dim = init_photo.shape
+
+    top_x = round(blinds_top_x_cor_rel * x_size)
+    top_y = round(blinds_top_y_cor_rel * y_size)
+
+    right_x = round(blinds_right_x_cor_rel * x_size)
+    right_y = round(blinds_right_y_cor_rel * y_size)
+
+    left_x = round(blinds_left_x_cor_rel * x_size)
+    left_y = round(blinds_left_y_cor_rel * y_size)
+
+    bottom_x = round(blinds_bottom_x_cor_rel * x_size)
+    bottom_y = round(blinds_bottom_y_cor_rel * y_size)
+
+    x_size = round(blinds_x_size_rel * x_size)
+    y_size = round(blinds_y_size_rel * y_size)
+
+    top = init_photo[top_y:top_y + y_size, top_x:top_x + x_size]
+    left = init_photo[left_y:left_y + y_size, left_x:left_x + x_size]
+    right = init_photo[right_y:right_y + y_size, right_x:right_x + x_size]
+    bottom = init_photo[bottom_y:bottom_y + y_size, bottom_x:bottom_x + x_size]
+
+    # nn_dir = "./NN/1.001"
+    # device = "cpu"
+    # blinds_model = torch.load(f"{nn_dir}/trained_Blinds_model.torch").to(device)
+    # top = classify_image(model=blinds_model, im=top, resize=blinds_resize, device=device)
+    # left = classify_image(model=blinds_model, im=left, resize=blinds_resize, device=device)
+    # right = classify_image(model=blinds_model, im=right, resize=blinds_resize, device=device)
+    # bottom = classify_image(model=blinds_model, im=bottom, resize=blinds_resize, device=device)
+
+    def extract_position(im):
+        txt = pytesseract.image_to_string(im[25:, :], config="-c tessedit_char_whitelist=012345678.$9 user_patterns_suffix ./blind_tesseract.txt")
+        try:
+            money = float(txt.split("$")[1].split("\n")[0])
+        except IndexError:
+            money = 0
+
+        if money == 0:
+            return None
+        if money == 0.25:
+            return Position.BigBlind
+        if money == 0.1:
+            return Position.SmallBlind
+        if money >= 2.0:
+            return Action.AllIn
+
+    location_action_map[Location.Right] = extract_position(im=right)
+    location_action_map[Location.Left] = extract_position(im=left)
+    location_action_map[Location.Top] = extract_position(im=top)
+    location_action_map[Location.Bottom] = extract_position(im=bottom)
+
+    none_counter = 0
+    for loc in [Location.Right, Location.Left, Location.Top, Location.Bottom]:
+        if location_action_map[loc] is None:
+            none_counter += 1
+
+    if none_counter == 4:
+        return location_position_map, location_action_map
+
+    location_position_map[dealer_location] = Position.Dealer
+    if location_action_map[Location((dealer_location.value + 1) % 4)] is None:
+        location_position_map[Location((dealer_location.value + 1) % 4)] = Position.SittingOut
+        if location_action_map[Location((dealer_location.value + 2) % 4)] is None:
+            location_position_map[Location((dealer_location.value + 2) % 4)] = Position.SittingOut
+            location_position_map[Location((dealer_location.value + 3) % 4)] = Position.SmallBlind
+            location_position_map[dealer_location] = Position.BigBlind
+        else:
+            location_position_map[Location((dealer_location.value + 2) % 4)] = Position.SmallBlind
+            if location_action_map[Location((dealer_location.value + 3) % 4)] is None:
+                location_position_map[Location((dealer_location.value + 3) % 4)] = Position.SittingOut
+                location_position_map[dealer_location] = Position.BigBlind
+            else:
+                location_position_map[Location((dealer_location.value + 3) % 4)] = Position.BigBlind
+    else:
+        location_position_map[Location((dealer_location.value + 1) % 4)] = Position.SmallBlind
+        if location_action_map[Location((dealer_location.value + 2) % 4)] is None:
+            location_position_map[Location((dealer_location.value + 2) % 4)] = Position.SittingOut
+            if location_action_map[Location((dealer_location.value + 3) % 4)] is None:
+                location_position_map[Location((dealer_location.value + 3) % 4)] = Position.SittingOut
+            else:
+                location_position_map[Location((dealer_location.value + 3) % 4)] = Position.BigBlind
+        else:
+            location_position_map[Location((dealer_location.value + 2) % 4)] = Position.BigBlind
+            location_position_map[Location((dealer_location.value + 3) % 4)] = Position.CutOff
+
+    return location_position_map, location_action_map
+
+
+def find_history(location_position_map, location_action_map):
+    position_action = {Position.BigBlind: Action.Fold, Position.SmallBlind: Action.Fold, Position.CutOff: Action.Fold, Position.Dealer: Action.Fold}
+    for loc in Location:
+        if location_action_map[loc] is not None:
+            position_action[location_position_map[loc]] = location_action_map[loc]
+
+    if position_action[Position.CutOff] == Action.AllIn:
+        if position_action[Position.Dealer] == Action.AllIn:
+            if position_action[Position.SmallBlind] == Action.AllIn:
+                if position_action[Position.BigBlind] == Action.AllIn:
+                    return History.CO_DE_SB_BB
+                else:
+                    return History.CO_DE_SB
+            else:
+                if position_action[Position.BigBlind] == Action.AllIn:
+                    return History.CO_DE_BB
+                else:
+                    return History.CO_DE
+        else:
+            if position_action[Position.SmallBlind] == Action.AllIn:
+                if position_action[Position.BigBlind] == Action.AllIn:
+                    return History.CO_SB_BB
+                else:
+                    return History.CO_SB
+            else:
+                if position_action[Position.BigBlind] == Action.AllIn:
+                    return History.CO_BB
+                else:
+                    return History.CO
+    else:
+        if position_action[Position.Dealer] == Action.AllIn:
+            if position_action[Position.SmallBlind] == Action.AllIn:
+                if position_action[Position.BigBlind] == Action.AllIn:
+                    return History.DE_SB_BB
+                else:
+                    return History.DE_SB
+            else:
+                if position_action[Position.BigBlind] == Action.AllIn:
+                    return History.DE_BB
+                else:
+                    return History.DE
+        else:
+            if position_action[Position.SmallBlind] == Action.AllIn:
+                if position_action[Position.BigBlind] == Action.AllIn:
+                    return History.SB_BB
+                else:
+                    return History.SB
+            else:
+                return History.BB
+
+
+def parse_total_pot(final_photo, sb, bb, allin):
+    y_size, x_size, dim = final_photo.shape
+    x_cor = round(x_size * pot_top_x_cor_rel)
+    y_cor = round(y_size * pot_top_y_cor_rel)
+    x_size = round(x_size * pot_x_size_rel)
+    y_size = round(y_size * pot_y_size_rel)
+
+    pot_photo = final_photo[y_cor:y_cor+y_size, x_cor:x_cor+x_size]
+    #txt = pytesseract.image_to_string(pot_photo, config="--psm 7 -c tessedit_char_whitelist=toalp:0123456789. user_patterns_suffix ./pot_tesseract.txt")
+    txt = pytesseract.image_to_string(pot_photo, config="--psm 7 user_patterns_suffix ./pot_tesseract.txt")
+
+    try:
+        total_pot = txt.split('$')[1].split("\n")[0]
+        total_pot = float(total_pot)
+    except:
+        total_pot = 10
+
+    if total_pot == 3 * bb + sb:
+        return [History.DE]
+
+    if total_pot == 2 * bb + sb:
+        return [History.CO, History.DE]
+
+    if total_pot == 2 * bb or total_pot == 3 * bb:
+        return [History.SB]
+
+    if total_pot == 2 * sb or total_pot == 2 * bb + sb:  # TODO: check if this is correct(second part)
+        return [History.BB]
+
+    if total_pot == 2 * allin + bb + sb:
+        return [History.CO_DE]
+
+    if total_pot == 2 * allin + 2 * bb:
+        return [History.DE_SB]
+
+    if total_pot == 2 * allin + bb:
+        return [History.CO_SB, History.DE_SB]
+
+    if total_pot == 2 * allin + sb + bb:
+        return [History.DE_BB]
+
+    if total_pot == 2 * allin + sb:
+        return [History.CO_BB, History.DE_BB]
+
+    if total_pot == 2 * allin or total_pot == 2 * allin + bb:
+        return [History.SB_BB]
+
+    if total_pot == 3 * allin + bb:
+        return [History.CO_DE_SB]
+
+    if total_pot == 3 * allin + sb:
+        return [History.CO_DE_BB]
+
+    if total_pot == 3 * allin:
+        return [History.CO_SB_BB, History.DE_SB_BB]
+
+    if total_pot == 4 * allin:
+        return [History.CO_DE_SB_BB]
+
+    # FIXME: finish for cases of additional blinds and allin that is greater than the normal
+    else:
+        return total_pot
 
 
 def find_hands(ordered_pic_list):
@@ -533,16 +525,45 @@ def strip_data(pic_list):
         print("Done with: " + pic)
 
 
+def parse_hand(hand):
+    im = cv2.imread(hand[0])
+    dealer_location = find_dealer_location(im=im)
+    for pic in hand:
+        im = cv2.imread(pic)
+        temp_location_position_map, temp_location_action_map = parse_location_position(init_photo=im, dealer_location=dealer_location)
+        if len(temp_location_position_map) > 0:
+            location_position_map, location_action_map = (temp_location_position_map, temp_location_action_map)
+        else:
+            break
+
+    im = cv2.imread(hand[-1])
+    total_pot_res = parse_total_pot(final_photo=im, sb=0.1, bb=0.25, allin=2.0)
+    history = find_history(location_position_map=location_position_map, location_action_map=location_action_map)
+
+    if history in total_pot_res:
+        return history
+
+    return None
+
+
+
+
 if __name__ == "__main__":
     dir_path = "./pictures/Running/*.png"
     files = glob.glob(dir_path)
     files.sort(key=extract_order)
 
-    strip_data(pic_list=files)
+    #strip_data(pic_list=files)
 
-    # hands_list = find_hands(ordered_pic_list=files)
-    # for hand in hands_list:
-    #    print(hand)
+    hands_list = find_hands(ordered_pic_list=files)
+    for hand in hands_list:
+        print(hand)
+        history = parse_hand(hand=hand)
+        print(history)
+
+
+
+
 
     """
     
