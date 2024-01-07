@@ -19,7 +19,7 @@ def get_data_loader(data_dir, width=16, height=24, batch_size=128, train=False, 
     }
 
     dataset = torchvision.datasets.ImageFolder(root=data_dir, transform=transform['train'] if train else transform['test'])
-    lengths = [int(split * len(dataset)), len(dataset) - round(split * len(dataset))]
+    lengths = [round(split * len(dataset)), len(dataset) - round(split * len(dataset))]
     train_dataset, validation_dataset = torch.utils.data.random_split(dataset, lengths)
 
     train_data_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
