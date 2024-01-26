@@ -1,7 +1,7 @@
 from utils_player import *
 import torch
 from torch.multiprocessing import Process, Lock
-
+import optuna
 
 if __name__ == "__main__":
 
@@ -20,6 +20,12 @@ if __name__ == "__main__":
     action_model = torch.load(f"{nn_dir}/trained_Action_model.torch").to(device)
     suit_model = torch.load(f"{nn_dir}/trained_Suit_model.torch").to(device)
     value_model = torch.load(f"{nn_dir}/trained_Value_model.torch").to(device)
+
+    optuna_name = f"tess_opt_{tess_models}"
+    opt_study = optuna.create_study(study_name=f'{optuna_name}',
+                                         storage=f'sqlite:///./Optuna/{optuna_name}.db ',
+                                         direction='maximize', load_if_exists=True)
+    tess_models = opt_study
 
     print('Models Loaded')
 

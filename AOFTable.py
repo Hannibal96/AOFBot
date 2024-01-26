@@ -7,7 +7,6 @@ from Card import Card
 from Strategy import *
 from logger import custom_print
 from tesseract import optimized_read
-import optuna
 print = custom_print
 
 
@@ -52,11 +51,7 @@ class AOFTable:
         self.value_model = value_model
         self.suit_model = suit_model
 
-        optuna_name = f"tess_opt_{tess_models}"
-        self.opt_study = optuna.create_study(study_name=f'{optuna_name}',
-                                             storage=f'sqlite:///./Optuna/{optuna_name}.db ',
-                                             direction='maximize', load_if_exists=True)
-
+        self.opt_study = tess_models
         self.device = device
 
     def get_name(self):
