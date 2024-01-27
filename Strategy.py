@@ -1,5 +1,5 @@
 from Enums import State, Action
-
+import random
 
 state_action_strategy_2_025_010_000 = [
                 [100.0, 100.0,  0.0,    100.0,  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0],  # 22
@@ -361,7 +361,7 @@ def decide_action(c1, c2, state, all_in, bb, sb, jp):
 
     hand_idx = (M-2) ** 2 + 2 * (m-2) + suit
     act = strategy[hand_idx][state.value]
-    if act > 50:
+    if act > random.uniform(0, 1) * 100:
         return Action.AllIn
     return Action.Fold
 
