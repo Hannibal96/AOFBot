@@ -13,3 +13,6 @@
 - change suit and value models to combined
 
 - Money Tracker
+
+- Parse History:
+    - How to recognize the end of a hand

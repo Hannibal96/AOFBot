@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     print('Device:', device)
 
-    nn_dir = "./NN/1.001"
+    nn_dir = "./NN_models/1.001"
     dealer_model = torch.load(f"{nn_dir}/trained_Button_model.torch").to(device)
     blinds_model = torch.load(f"{nn_dir}/trained_Blinds_model.torch").to(device)
     action_model = torch.load(f"{nn_dir}/trained_Action_model.torch").to(device)

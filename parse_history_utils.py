@@ -67,7 +67,7 @@ def find_dealer_location(im):
     right = im[right_y:right_y + y_size, right_x:right_x + x_size]
     bottom = im[bottom_y:bottom_y + y_size, bottom_x:bottom_x + x_size]
 
-    nn_dir = "./NN/1.001"
+    nn_dir = "./NN_models/1.001"
     device = "cpu"
     dealer_model = torch.load(f"{nn_dir}/trained_Button_model.torch").to(device)
     top = classify_image(model=dealer_model, im=top, resize=dealer_resize, device=device)

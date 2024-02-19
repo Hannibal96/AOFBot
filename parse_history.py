@@ -1,5 +1,7 @@
 from parse_history_utils import *
-
+import fnmatch
+import shutil
+from tqdm import tqdm
 
 class HistoryDataBase:
     def __init__(self, file_name):
@@ -168,11 +170,14 @@ def parse_location_position(init_photo, dealer_location, allin=2.0, sb=0.1, bb=0
     # bottom = classify_image(model=blinds_model, im=bottom, resize=blinds_resize, device=device)
 
     def extract_position(im):
-        txt = pytesseract.image_to_string(im[25:, :], config="-c tessedit_char_whitelist=012345678.$9 user_patterns_suffix ./blind_tesseract.txt")
-        try:
-            money = float(txt.split("$")[1].split("\n")[0])
-        except IndexError:
-            money = 0
+        money = 0
+        for i in range(10):
+            txt = pytesseract.image_to_string(im[5*i:, :], config="-c tessedit_char_whitelist=012345678.$9 user_patterns_suffix ./blind_tesseract.txt")
+            if txt == "":
+                continue
+            if txt[0] == "$" and (len(txt.split(".")) == 2 or len(txt.split(".")) == 1):
+                money = float(txt.split("$")[1].split("\n")[0])
+                break
 
         if money == 0:
             return None
@@ -492,7 +497,7 @@ def strip_data(pic_list):
 
         return top, left, right, bottom
 
-    for pic in pic_list:
+    for pic in tqdm(pic_list):
         im = cv2.imread(pic)
         dealer_top, dealer_left, dealer_right, dealer_bottom = strip_data_dealer(im)
         comm_1, comm_2, comm_3, comm_4, comm_5 = strip_data_community_cards(im)
@@ -526,6 +531,7 @@ def strip_data(pic_list):
 
 
 def parse_hand(hand):
+    location_position_map, location_action_map = None, None
     im = cv2.imread(hand[0])
     dealer_location = find_dealer_location(im=im)
     for pic in hand:
@@ -538,74 +544,61 @@ def parse_hand(hand):
 
     im = cv2.imread(hand[-1])
     total_pot_res = parse_total_pot(final_photo=im, sb=0.1, bb=0.25, allin=2.0)
+    if len(total_pot_res) == 1:
+        return total_pot_res[0]
+
+    if location_position_map is None:
+        return None
     history = find_history(location_position_map=location_position_map, location_action_map=location_action_map)
+
+    if total_pot_res == [History.BB]:
+        return History.BB
 
     if history in total_pot_res:
         return history
 
+    elif total_pot_res[0] in [History.CO_BB, History.DE_BB, History.SB_BB, History.CO_DE_BB, History.CO_SB_BB, History.DE_SB_BB, History.CO_DE_SB_BB]:
+        if history == History.SB:
+            return History.SB_BB
+        if history == History.CO:
+            return History.CO_BB
+        if history == History.DE:
+            return History.DE_BB
+        if history == History.CO_DE:
+            return History.CO_DE_BB
+        if history == History.CO_SB:
+            return History.CO_SB_BB
+        if history == History.DE_SB:
+            return History.DE_SB_BB
+        if history == History.CO_DE_SB:
+            return History.CO_DE_SB_BB
+
     return None
 
 
+def remove_hand(hand):
+    for pic in hand:
+        shutil.move(pic, "./pictures/Running/parsed/"+pic.split("\\")[-1])
+        #os.remove(pic)
 
 
 if __name__ == "__main__":
     dir_path = "./pictures/Running/*.png"
     files = glob.glob(dir_path)
-    files.sort(key=extract_order)
+    filtered_filenames = [filename for filename in files if fnmatch.fnmatch(filename.split("\\")[-1], "Red_[0-9]*_[0-9]*_[0-9]*.png")]
 
-    #strip_data(pic_list=files)
+    filtered_filenames.sort(key=extract_order)
 
-    hands_list = find_hands(ordered_pic_list=files)
-    for hand in hands_list:
-        print(hand)
-        history = parse_hand(hand=hand)
-        print(history)
+    strip_data(pic_list=files)
+
+    # hands_list = find_hands(ordered_pic_list=filtered_filenames)
+    # for hand in hands_list:
+    #     print(hand)
+    #     history = parse_hand(hand=hand)
+    #     print(history)
+    #     # remove_hand(hand=hand)
 
 
 
 
 
-    """
-    
-    hand_end = True
-    for idx, pic in enumerate(files):
-        im = cv2.imread(pic)
-        button_pos = find_dealer_location(im=im)
-
-        dealer_location = None
-        if button_pos[0] == 1:
-            dealer_location = Location.Top
-        if button_pos[1] == 1:
-            dealer_location = Location.Left
-        if button_pos[2] == 1:
-            dealer_location = Location.Right
-        if button_pos[3] == 1:
-            dealer_location = Location.Bottom
-
-        if dealer_location is None:
-            continue
-
-        print(pic)
-
-        loc_pos, loc_act = parse_location_position(init_photo=im, dealer_location=dealer_location)
-        hist = find_history(location_position_map=loc_pos, location_action_map=loc_act)
-
-        c = 0
-        for loc in Location:
-            c += int(loc_act[loc] is None)
-
-        if c == 4:
-            loc_pos, loc_act = parse_location_position(init_photo=cv2.imread(files[idx-1]), dealer_location=dealer_location)
-            hist = find_history(location_position_map=loc_pos, location_action_map=loc_act)
-            print(hist)
-
-        if not prev_button_pos == button_pos:
-            hand_end = not hand_end
-            if hand_end:
-                total_pot_parse_res = parse_total_pot(final_photo=cv2.imread(files[idx-1]), allin=2.0, sb=0.1, bb=0.25)
-                print(files[idx-1], total_pot_parse_res)
-            else:
-                pass
-
-        prev_button_pos = button_pos
-"""
