@@ -7,6 +7,7 @@ from CNN_data import get_data_loader
 from CNN_mdel import get_model
 import os
 from Enums import *
+import copy
 
 
 blinds_resize = (48, 48)
@@ -99,6 +100,10 @@ def eval_epoch(model, loss_func, test_set, device):
 def train_and_eval(model, optimizer, loss_func, dataset, testset, epochs, task, device):
 
     train_loss_list, train_acc_list, eval_loss_list, eval_acc_list = [], [], [], []
+    best_eval_acc = 0
+    best_train_acc = 0
+    best_epoch_idx = -1
+    best_model_weights = None
 
     eval_loss, eval_acc = eval_epoch(model=model, loss_func=loss_func, test_set=testset, device=device)
     print("*" * 25)
@@ -116,10 +121,17 @@ def train_and_eval(model, optimizer, loss_func, dataset, testset, epochs, task, 
         train_acc_list.append(train_acc * 100)
         eval_loss_list.append(eval_loss)
         eval_acc_list.append(eval_acc * 100)
+        if eval_acc > best_eval_acc or (eval_acc == best_eval_acc and train_acc > best_train_acc):
+            best_eval_acc = eval_acc
+            best_train_acc = train_acc
+            best_epoch_idx = epoch
+            best_model_weights = copy.deepcopy(model.state_dict())
+
         if (train_acc == 1.0 and eval_acc == 1.0) or train_loss < 1e-6:
             break
 
-    return train_loss_list, train_acc_list, eval_loss_list, eval_acc_list
+    model.load_state_dict(best_model_weights)
+    return train_loss_list, train_acc_list, eval_loss_list, eval_acc_list, best_epoch_idx
 
 
 def classify_image(model, im, resize, device):
@@ -132,9 +144,6 @@ def classify_image(model, im, resize, device):
 
 
 def hpo(data_dir, resize, criterion, device, epochs=100, path=None):
-
-    best_acc_eval = 0
-    best_acc_train = 0
 
     task = data_dir.split('/')[-1]
     output = len(os.listdir(data_dir))
@@ -161,6 +170,11 @@ def hpo(data_dir, resize, criterion, device, epochs=100, path=None):
     lr_list = [1e-2, 5e-2, 1e-3, 5e-3, 1e-4, 5e-4]
 
     for params in params_list:
+        with open(f"./NN_models/{task}_results.log", "a") as file:
+            file.write("="*25+"\n")
+            file.write(f"Starting CV={params[0]} FC={params[1]}\n")
+        best_acc_eval_params = 0
+        best_acc_train_params = 0
         for batch_size in batch_list:
             for lr in lr_list:
                 data_train, data_validation = get_data_loader(data_dir=data_dir, batch_size=batch_size, height=resize[0], width=resize[1])
@@ -170,18 +184,24 @@ def hpo(data_dir, resize, criterion, device, epochs=100, path=None):
 
                 model = get_model(width=resize[1], height=resize[0], channels=3, output=output, conv=conv, fc=fc).to(device)
                 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-                train_loss_list, train_acc_list, eval_loss_list, eval_acc_list = train_and_eval(model=model, optimizer=optimizer, loss_func=criterion,
-                                                                                                dataset=data_train, testset=data_validation,
-                                                                                                epochs=epochs, task=task, device=device)
+                train_loss_list, train_acc_list, eval_loss_list, eval_acc_list, best_epoch_idx = train_and_eval(model=model, optimizer=optimizer, loss_func=criterion,
+                                                                                                                dataset=data_train, testset=data_validation,
+                                                                                                                epochs=epochs, task=task, device=device)
 
-                last_eval_acc = eval_acc_list[-1]
-                last_train_acc = train_acc_list[-1]
+                last_eval_acc = eval_acc_list[best_epoch_idx-1]         # its not last, its best but for compatibiility left with misleading name
+                last_train_acc = train_acc_list[best_epoch_idx-1]
+                print(f"{model_str}: best epoch-{best_epoch_idx} with train={last_train_acc}, eval={last_eval_acc}")
+                with open(f"./NN_models/{task}_results.log", "a") as file:
+                    file.write(f"{model_str}: train={last_train_acc}, eval={last_eval_acc}\n")
 
-                if (last_eval_acc > best_acc_eval) or (last_eval_acc == best_acc_eval and last_train_acc > best_acc_train):
+                if (last_eval_acc > best_acc_eval_params) or (last_eval_acc == best_acc_eval_params and last_train_acc > best_acc_train_params):
                     print(f"-I- Saved {task} with {model_str}")
-                    torch.save(model, "./trained_" + task + f"_model_{round(last_eval_acc, 1)}.torch")
-                    best_acc_eval = last_eval_acc
-                    best_acc_train = last_train_acc
+                    torch.save(model, f"./NN_models/last_run/{task}_CV={params[0]}_FC={params[1]}.torch")
+                    best_acc_eval_params = last_eval_acc
+                    best_acc_train_params = last_train_acc
+
+                    if path is None:
+                        continue
 
                     fig, axes = plt.subplots(1, 2, figsize=(15, 5))
                     axes[0].plot(train_loss_list, label="Train")
@@ -194,12 +214,12 @@ def hpo(data_dir, resize, criterion, device, epochs=100, path=None):
                     axes[1].set_title(task + " " + model_str + " -Accuracy")
                     axes[1].legend()
                     axes[1].grid()
-                    if path is None:
-                        plt.show()
-                    else:
-                        plt.savefig(f"{path}/{task}_{model_str}_{round(last_eval_acc, 1)}%.png")
+                    plt.savefig(f"{path}/{task}_{model_str}_{round(last_eval_acc, 1)}%.png")
                     plt.clf()
 
                 if last_eval_acc == 100.0 and last_train_acc == 100.0:
                     return
+
+        with open(f"./NN_models/{task}_results.log", "a") as file:
+            file.write("\n\n")
 
