@@ -290,7 +290,7 @@ def parse_total_pot(final_photo, sb, bb, allin):
 
     pot_photo = final_photo[y_cor:y_cor+y_size, x_cor:x_cor+x_size]
     #txt = pytesseract.image_to_string(pot_photo, config="--psm 7 -c tessedit_char_whitelist=toalp:0123456789. user_patterns_suffix ./pot_tesseract.txt")
-    txt = pytesseract.image_to_string(pot_photo, config="--psm 7 user_patterns_suffix ./pot_tesseract.txt")
+    txt = pytesseract.image_to_string(pot_photo, config="--psm 7 user_patterns_suffix ./pot_tesseract.txt -c tessedit_char_whitelist=0123456789TotalPot:$.")
 
     try:
         total_pot = txt.split('$')[1].split("\n")[0]
@@ -497,13 +497,18 @@ def strip_data(pic_list):
 
         return top, left, right, bottom
 
-    for pic in tqdm(pic_list):
+    for idx, pic in tqdm(enumerate(pic_list)):
+        if np.random.uniform() < 0.9:
+            print("Done with: " + pic)
+            os.remove(pic)
+            continue
+
         im = cv2.imread(pic)
         dealer_top, dealer_left, dealer_right, dealer_bottom = strip_data_dealer(im)
         comm_1, comm_2, comm_3, comm_4, comm_5 = strip_data_community_cards(im)
         top_left, top_right, right_left, right_right, left_left, left_right = strip_data_villain_cards(im)
         cards_bottom_left, cards_bottom_right = strip_data_bottom_cards(im)
-        #blinds_top, blinds_left, blinds_right, blinds_bottom = strip_data_blinds(im)
+        blinds_top, blinds_left, blinds_right, blinds_bottom = strip_data_blinds(im)
 
         short_name = pic.split("\\")[-1].split('.')[0]
         cv2.imwrite("./pictures/Data/Button/"+short_name+"_dealer_top.png", dealer_top)
@@ -527,18 +532,29 @@ def strip_data(pic_list):
         cv2.imwrite("./pictures/Data/Suit/"+short_name+"_bottom_left.png", cards_bottom_left)
         cv2.imwrite("./pictures/Data/Suit/"+short_name+"_bottom_right.png", cards_bottom_right)
 
+        cv2.imwrite("./pictures/Data/Blinds/"+short_name+"_blinds_top.png", blinds_top)
+        cv2.imwrite("./pictures/Data/Blinds/"+short_name+"_blinds_left.png", blinds_left)
+        cv2.imwrite("./pictures/Data/Blinds/"+short_name+"_blinds_right.png", blinds_right)
+        cv2.imwrite("./pictures/Data/Blinds/"+short_name+"_blinds_bottom.png", blinds_bottom)
+
         print("Done with: " + pic)
+        os.remove(pic)
+
 
 
 def parse_hand(hand):
-    location_position_map, location_action_map = None, None
+    location_position_map, location_action_map = {}, {}
     im = cv2.imread(hand[0])
     dealer_location = find_dealer_location(im=im)
     for pic in hand:
         im = cv2.imread(pic)
         temp_location_position_map, temp_location_action_map = parse_location_position(init_photo=im, dealer_location=dealer_location)
-        if len(temp_location_position_map) > 0:
+        #if len(temp_location_position_map) > 0:
+        #    location_position_map, location_action_map = (temp_location_position_map, temp_location_action_map)
+        if sum([v == Action.AllIn for v in temp_location_action_map.values()]) >= sum([v == Action.AllIn for v in location_action_map.values()]):
             location_position_map, location_action_map = (temp_location_position_map, temp_location_action_map)
+        elif len(temp_location_position_map) == 0 and len(location_position_map) == 0:
+            continue
         else:
             break
 
@@ -590,13 +606,15 @@ if __name__ == "__main__":
     filtered_filenames.sort(key=extract_order)
 
     strip_data(pic_list=files)
+    0/0
 
-    # hands_list = find_hands(ordered_pic_list=filtered_filenames)
-    # for hand in hands_list:
-    #     print(hand)
-    #     history = parse_hand(hand=hand)
-    #     print(history)
-    #     # remove_hand(hand=hand)
+    hands_list = find_hands(ordered_pic_list=filtered_filenames)
+    for hand in hands_list:
+        print(hand)
+        history = parse_hand(hand=hand)
+        print(history)
+        input("Correct?")
+        remove_hand(hand=hand)
 
 
 

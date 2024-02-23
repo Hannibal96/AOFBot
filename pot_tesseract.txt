@@ -1,1 +1,1 @@
-Total Pot : \$\d+
+Total Pot: \$\d+

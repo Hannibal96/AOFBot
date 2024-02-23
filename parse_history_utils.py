@@ -40,8 +40,7 @@ class History(Enum):
 def extract_order(file_name):
     base_name = os.path.basename(file_name)
     color, table_number, hand_counter, inner_counter = base_name.split(".")[0].split("_")
-    res = int(table_number) * 1e6 + int(hand_counter) * 1e3 + int(inner_counter)
-    return int(res)
+    return [int(table_number), int(hand_counter), int(inner_counter)]
 
 
 def find_dealer_location(im):
@@ -67,9 +66,11 @@ def find_dealer_location(im):
     right = im[right_y:right_y + y_size, right_x:right_x + x_size]
     bottom = im[bottom_y:bottom_y + y_size, bottom_x:bottom_x + x_size]
 
-    nn_dir = "./NN_models/1.001"
+    nn_dir = "./NN_models/3.1"
     device = "cpu"
-    dealer_model = torch.load(f"{nn_dir}/trained_Button_model.torch").to(device)
+
+    dealer_model_path = glob.glob(f"{nn_dir}/*Button*.torch")[0]
+    dealer_model = torch.load(dealer_model_path).to(device)
     top = classify_image(model=dealer_model, im=top, resize=dealer_resize, device=device)
     left = classify_image(model=dealer_model, im=left, resize=dealer_resize, device=device)
     right = classify_image(model=dealer_model, im=right, resize=dealer_resize, device=device)

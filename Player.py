@@ -2,6 +2,7 @@ from utils_player import *
 import torch
 from torch.multiprocessing import Process, Lock
 import optuna
+import glob
 
 if __name__ == "__main__":
 
@@ -14,12 +15,20 @@ if __name__ == "__main__":
 
     print('Device:', device)
 
-    nn_dir = "./NN_models/1.001"
-    dealer_model = torch.load(f"{nn_dir}/trained_Button_model.torch").to(device)
-    blinds_model = torch.load(f"{nn_dir}/trained_Blinds_model.torch").to(device)
-    action_model = torch.load(f"{nn_dir}/trained_Action_model.torch").to(device)
-    suit_model = torch.load(f"{nn_dir}/trained_Suit_model.torch").to(device)
-    value_model = torch.load(f"{nn_dir}/trained_Value_model.torch").to(device)
+    #nn_dir = "./NN_models/1.001"
+    nn_dir = "./NN_models/3.1"
+
+    dealer_model_path = glob.glob(f"{nn_dir}/*Button*.torch")[0]
+    blinds_model_path = glob.glob(f"{nn_dir}/*Blinds*.torch")[0]
+    action_model_path = glob.glob(f"{nn_dir}/*Action*.torch")[0]
+    suit_model_path = glob.glob(f"{nn_dir}/*Suit*.torch")[0]
+    value_model_path = glob.glob(f"{nn_dir}/*Value*.torch")[0]
+
+    dealer_model = torch.load(dealer_model_path).to(device)
+    blinds_model = torch.load(blinds_model_path).to(device)
+    action_model = torch.load(action_model_path).to(device)
+    suit_model = torch.load(suit_model_path).to(device)
+    value_model = torch.load(value_model_path).to(device)
 
     optuna_name = f"tess_opt_{tess_models}"
     opt_study = optuna.create_study(study_name=f'{optuna_name}',
