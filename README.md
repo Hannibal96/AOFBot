@@ -5,7 +5,7 @@
 ---
 
 ## 🎬 Project Demo
-
+[![AOFBot live recording](https://img.youtube.com/vi/skpdq-eVWLA/0.jpg)](https://www.youtube.com/watch?v=skpdq-eVWLA)
 [![Watch the demo](https://img.youtube.com/vi/skpdq-eVWLA/maxresdefault.jpg)](https://www.youtube.com/watch?v=skpdq-eVWLA)
 
 👉 Full video walkthrough: https://www.youtube.com/watch?v=skpdq-eVWLA
